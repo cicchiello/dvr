@@ -1,0 +1,49 @@
+#!/bin/bash
+
+if [ "${1}" == "" ]
+then
+    echo "Usage: "${0}" <mnt-name>"
+    exit -1
+fi
+
+user=`whoami`
+if [ "$user" != "root" ]
+then
+    echo 'Sorry, this shell script must be run as root; perhaps you meant to use "sudo"?'
+    exit
+fi
+
+echo "Seems you're allowed in!"
+echo ""
+
+here=$(dirname ${0})
+echo "work dir: "${here}
+
+# accept either /mnt/<mount-name> or <mount-name>
+mntname=$(echo ${1} | sed 's?/mnt/??g' | sed 's?/$??g')
+
+echo "Setting up to record to mount point: /mnt/${mntname}/dvr"
+echo "Clients can access DVR via http://mediaserver/dvr/index.php"
+echo ""
+
+
+apt-get update
+apt-get upgrade
+apt-get -y install apache2 apache2-utils
+apt-get -y install libapache2-mod-php5 php5 php-pear php5-xcache php5-mysql php5-curl php5-gd
+
+if [ ! -d "/mnt/${mntname}/dvr" ]
+then
+    mkdir "/mnt/${mntname}/dvr"
+fi
+
+if [ ! -L "/var/www/dvr" ]
+then
+    ln -s /home/pi/dvr/www /var/www/dvr
+fi
+
+if [ ! -f "/var/www/dvr/index.php" ]
+then
+    echo "<?php phpinfo(); ?>" > /var/www/dvr/index.php
+fi
+
