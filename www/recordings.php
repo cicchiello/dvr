@@ -2,13 +2,10 @@
 <html>
   <head>
     
-<link href="https://www.w3schools.com/w3css/4/w3.css" media="all" rel="stylesheet">
-<link href="./style.css" media="all" rel="stylesheet">
-
-<script type="text/javascript">
-'use strict';
-//window.onload = init;
-</script>
+  <link rel="shortcut icon" type="image/x-icon" href="./img/dvr-favicon.ico" />
+    
+  <link href="./w3.css" media="all" rel="stylesheet">
+  <link href="./style.css" media="all" rel="stylesheet">
 
 <style>
 table, th, td {
