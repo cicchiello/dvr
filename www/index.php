@@ -44,7 +44,7 @@ function update_vars(device) {
     //device['BaseURL'] = device['BaseURL'] || 'http://' + devices['LocalIP'];
     device['ScanURL'] = device['BaseURL'] + '/lineup.html';
     device['Version'] = device['Version'] || device['FirmwareVersion'];
-    device['RecordingsURL'] = device['BaseURL'] + '/lineup.html';
+    device['RecordingsURL'] = './recordings.php';
     device['SchedulesURL'] = device['BaseURL'] + '/lineup.html';
 
     if (device['ChannelCount'] > 0) {
