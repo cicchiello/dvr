@@ -29,7 +29,6 @@
         outline: none; /* Remove outline */
         background-color: #44661b; /* Set a background color */
         color: white; /* Text color */
-        cursor: pointer; /* Add a mouse pointer on hover */
         padding: 5px; /* Some padding */
         border-radius: 10px; /* Rounded corners */
      }
