@@ -7,36 +7,37 @@
   <link href="./w3.css" media="all" rel="stylesheet">
   <link href="./style.css" media="all" rel="stylesheet">
 
-<style>
-table, th, td {
-    border: 1px solid black;
-    border-collapse: collapse;
-}
-th, td {
-    padding: 5px;
-    text-align: left;
-}
+  <style>
+     table, th, td {
+        border: 1px solid black;
+        border-collapse: collapse;
+     }
+     
+     th, td {
+        padding: 5px;
+        text-align: left;
+     }
 
-#homeBtn {
-    display: block; /* Hidden by default */
-    position: fixed; /* Fixed/sticky position */
-    top: 20px; /* Place the button at the bottom of the page */
-    left: 30px; /* Place the button 30px from the right */
-    z-index: 99; /* Make sure it does not overlap */
-    border: none; /* Remove borders */
-    outline: none; /* Remove outline */
-    background-color: #93afe7; /* Set a background color */
-    color: white; /* Text color */
-    cursor: pointer; /* Add a mouse pointer on hover */
-    padding: 5px; /* Some padding */
-    border-radius: 10px; /* Rounded corners */
-}
+     #homeBtn {
+        display: block; /* block element by default */
+        position: fixed; /* Fixed position */
+        top: 20px; /* Place the button at the top of the page */
+        left: 30px; /* Place the button 30px from the left */
+        z-index: 99; /* Make sure it does not overlap */
+        border: none; /* Remove borders */
+        outline: none; /* Remove outline */
+        background-color: #93afe7; /* Set a background color */
+        color: white; /* Text color */
+        cursor: pointer; /* Add a mouse pointer on hover */
+        padding: 5px; /* Some padding */
+        border-radius: 10px; /* Rounded corners */
+     }
 
-#homeBtn:hover {
-    background-color: #1a56d2; /* Add a dark-grey background on hover */
-}
-</style>
-		
+     #homeBtn:hover {
+        background-color: #1a56d2; /* Add a dark-grey background on hover */
+     }
+  </style>
+
 </head>
 <body class="bg">
 
