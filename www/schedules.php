@@ -9,6 +9,16 @@
   <link href="./style.css" media="all" rel="stylesheet">
 
   <style>
+     table, th, td {
+        border: 1px solid black;
+        border-collapse: collapse;
+     }
+     
+     th, td {
+        padding: 5px;
+        text-align: left;
+     }
+
      #menuArea {
         display: block; /* block element by default */
         position: fixed; /* Fixed position */
@@ -49,17 +59,6 @@
      
   </style>
 
-  <script>
-    function menuAction() {
-      var x = document.getElementById("menuItems");
-      if (x.className.indexOf("w3-show") == -1) {
-         x.className += " w3-show";
-      } else {
-         x.className = x.className.replace(" w3-show", "");
-      }
-    }
-  </script>
-  
   </head>
   
 	  <?php

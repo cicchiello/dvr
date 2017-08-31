@@ -9,6 +9,16 @@
   <link href="./style.css" media="all" rel="stylesheet">
 
   <style>
+     table, th, td {
+        border: 1px solid black;
+        border-collapse: collapse;
+     }
+     
+     th, td {
+        padding: 5px;
+        text-align: left;
+     }
+
      #menuArea {
         display: block; /* block element by default */
         position: fixed; /* Fixed position */
@@ -49,17 +59,6 @@
      
   </style>
 
-  <script>
-    function menuAction() {
-      var x = document.getElementById("menuItems");
-      if (x.className.indexOf("w3-show") == -1) {
-         x.className += " w3-show";
-      } else {
-         x.className = x.className.replace(" w3-show", "");
-      }
-    }
-  </script>
-  
   </head>
   
 	  <?php
@@ -82,28 +81,23 @@
   <body class="bg">
 
     <div id="menuArea">
-      <input onclick="menuAction()" type="image" src="img/showmenu.png"
-	     width="64" height="64" title="Menu" class="Btn">
+      <a class="_URL" href="./index.php">
+        <img src="img/home.png" width="64" height="64" title="Home" class="Btn">
+      </a>
       
-      <div id="menuItems" class="w3-hide">
-	<a class="_URL" href="./live.php">
-	  <div class="menuLbl Btn" title="Live TV">
+      <div id="menuItems" class="w3-show">
+	<div class="menuLbl Btn" title="Live TV">
 	    <img id="menu1" src="img/livetv2.png" width="64" height="64" class="Btn">
 	    <p><b><?php echo $numChannels; ?> Channels</b></p>
-	  </div>
-	</a>
-	<a class="_URL" href="./recordings.php">
-	  <div class="menuLbl Btn" title="Recordings">
-	    <img id="menu2" src="img/video.png" width="64" height="64" class="Btn">
-	    <p><b><?php echo $numRecordings; ?> Recordings</b></p>
-	  </div>
-	</a>
-	<a class="_URL" href="./schedules.php">
-	  <div class="menuLbl Btn" title="Schedule">
-	    <img id="menu3" src="img/schd.png" width="64" height="64" class="Btn">
-	    <p><b><?php echo $numScheduled; ?> Scheduled</b></p>
-	  </div>
-	</a>
+	</div>
+	<div class="menuLbl Btn">
+	    <img id="menu2" src="img/video-gray.png" width="64" height="64" class="Btn">
+	    <span style="color:#7a9538"><p><b><?php echo $numRecordings; ?> Recordings</b></p></span>
+	</div>
+	<div class="menuLbl Btn">
+	    <img id="menu3" src="img/schd-gray.png" width="64" height="64" class="Btn">
+	    <span style="color:#7a9538"><p><b><?php echo $numScheduled; ?> Scheduled</b></p></span>
+	</div>
       </div>
     </div>
 
@@ -140,7 +134,6 @@
       </div>
       
     </div>
-    </div>
     
-  </body>
+</body>
 </html>
