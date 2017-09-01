@@ -9,6 +9,14 @@
   <link href="./w3.css" media="all" rel="stylesheet">
   <link href="./style.css" media="all" rel="stylesheet">
   
+  <link rel="stylesheet" href="http://cdn.kendostatic.com/2015.1.429/styles/kendo.common-material.min.css" />
+  <link rel="stylesheet" href="http://cdn.kendostatic.com/2015.1.429/styles/kendo.material.min.css" />
+  <link rel="stylesheet" href="http://cdn.kendostatic.com/2015.1.429/styles/kendo.dataviz.min.css" />
+  <link rel="stylesheet" href="http://cdn.kendostatic.com/2015.1.429/styles/kendo.dataviz.material.min.css" />
+
+  <script src="http://cdn.kendostatic.com/2015.1.429/js/jquery.min.js"></script>
+  <script src="http://cdn.kendostatic.com/2015.1.429/js/kendo.all.min.js"></script>
+  
   <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
   
   <style>
@@ -53,6 +61,15 @@
         outline: none; /* Remove outline */
      }
      
+     #plus:hover {
+        background-color: #465702; /* Add a dark-grey background on hover */
+        outline: none; /* Remove outline */
+     }
+     
+     .ScheduleBtn:hover {
+        cursor: pointer; /* Add a mouse pointer on hover */
+     }
+     
      .menuLbl {
         height: 64px;
         width: 200px;
@@ -71,21 +88,41 @@
         transform: translate(-50%, -50%);
      }
      
+     input[type=text], select {
+        padding: 5px 5px;
+        margin: 4px 0;
+        display: inline-block;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        box-sizing: border-box;
+        cursor: pointer; /* Add a mouse pointer on hover */
+     }
+
+     input[type=time] {
+        padding: 0px 5px;
+        margin: 4px 0;
+        display: inline-block;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        box-sizing: border-box;
+        cursor: pointer; /* Add a mouse pointer on hover */
+     }
+
   </style>
 
   <script>
     function toggleSchedule() {
-       var sarea = document.getElementById("schedule");
-       var btn = document.getElementById("plus");
-       var btn_gray = document.getElementById("plus-gray");
-       if (sarea.className.indexOf("w3-show") == -1) {
-          sarea.className = sarea.className.replace(" w3-hide", " w3-show");
+       var newSchdArea = document.getElementById("newSchedule");
+       if (newSchdArea.className.indexOf("w3-show") == -1) {
+          var schdArea = document.getElementById("scheduled");
+          var btn = document.getElementById("plus");
+          var cal = document.getElementById("calendar");
+          schdArea.className = schdArea.className.replace(" w3-show", " w3-hide");
+          newSchdArea.className = newSchdArea.className.replace(" w3-hide", " w3-show");
+          cal.className = cal.className.replace(" w3-hide", " w3-show");
           btn.className = btn.className.replace(" w3-show", " w3-hide");
-          btn_gray.className = btn_gray.className.replace(" w3-hide", " w3-show");
        } else {
-          sarea.className = sarea.className.replace(" w3-show", " w3-hide");
-          btn.className = btn.className.replace(" w3-hide", " w3-show");
-          btn_gray.className = btn_gray.className.replace(" w3-show", " w3-hide");
+          location.reload();
        }
     }
   </script>
@@ -121,15 +158,15 @@
 	</a>
 	
 	<div class="menuLbl Btn">
-	    <img id="menu1" src="img/livetv2-gray.png" width="64" height="64" class="Btn">
+	    <img id="menu1" src="img/livetv2-gray.png" width="64" height="64">
 	    <span style="color:#7a9538"><p><b><?php echo $numChannels; ?> Channels</b></p></span>
 	</div>
 	<div class="menuLbl Btn">
-	    <img id="menu2" src="img/video-gray.png" width="64" height="64" class="Btn">
+	    <img id="menu2" src="img/video-gray.png" width="64" height="64">
 	    <span style="color:#7a9538"><p><b><?php echo $numRecordings; ?> Recordings</b></p></span>
 	</div>
 	<div class="menuLbl Btn">
-	    <img id="menu3" src="img/schd.png" width="64" height="64" class="Btn">
+	    <img id="menu3" src="img/schd.png" width="64" height="64">
 	    <p><b><?php echo $numScheduled; ?> Scheduled</b></p>
 	</div>
       </div>
@@ -138,7 +175,7 @@
 
     <div class="w3-container w3-display-middle">
       
-      <div class="w3-panel w3-card w3-white w3-padding-16 w3-round-large">
+      <div id="scheduled" class="w3-panel w3-card w3-white w3-padding-16 w3-round-large w3-show">
 
 	<?php
 	   $url = "https://jfcenterprises.cloudant.com/dvr/_design/dvr/_view/recordings";
@@ -169,65 +206,98 @@
 	?>
       </div>
 	
-      <div id="schedule" class="w3-panel w3-card w3-white w3-padding-16 w3-round-large w3-hide">
-	<form>
+      <div id="newSchedule" class="w3-panel w3-card w3-white w3-padding-16 w3-round-large w3-hide">
+	<form id="newRecording">
 	  <fieldset>
-	    <legend>New Recording Schedule:</legend>
-	    Description: <input type="text"><br>
-	    Date: <input type="text"><br>
-	    Start Time: <input type="text">
-	    Duration (minutes): <input type="text">
+	    <legend>Schedule Recording:</legend>
+	    <table>
+	      <tr>
+		<td>Channel:</td>
+		<td><b id="theChannel" style="color:blue" class="w3-right">TBD</b></td>
+	      </tr>
+	      <tr>
+		<td>Description:</td>
+		<td>
+		  <?php
+		     $s = 'Recording on '.date('d-M-y H:i');
+		     echo '<input type="text" dir="rtl" style="color:blue" size="30" placeholder="'.$s.'">';
+		  ?>
+		</td>
+	      </tr>
+	      <tr>
+		<td>Date:</td>
+		<td><b id="theDate" style="color:blue" class="w3-right">TBD</b></td>
+	      </tr>
+	      <tr>
+		<td>Start Time:</td>
+		<td><input type="time" style="color:blue" class="w3-right"
+			   name="startTime"></td>
+	      </tr>
+	      <tr>
+		<td>Duration:</td>
+		<td>
+		  <select id="duration" dir="rtl" style="color:blue" class="w3-right" form="newRecording">
+		    <option value="30">30 minutes</option>
+		    <option value="60">1 hour</option>
+		    <option value="90">90 minutes</option>
+		    <option value="120">2 hours</option>
+		    <option value="180">3 hours</option>
+		    <option value="240">4 hours</option>
+		  </select>
+		</td>
+	      </tr>
+	      <tr>
+		<td>Start Early?:</td>
+		<td>
+		  <select id="overlap" dir="rtl" style="color:blue" class="w3-right" form="newRecording">
+		    <option value="0">none</option>
+		    <option value="5">5 minutes</option>
+		    <option value="10">10 minutes</option>
+		    <option value="15">15 minutes</option>
+		  </select>
+		</td>
+	      </tr>
+	    </table>
+	    <br>
+	    <img id="cancelSchedule" onclick="toggleSchedule()" src="img/cancel.png"
+		 width="64" height="64" title="Cancel" class="ScheduleBtn">
+	    <img id="commitSchedule" onclick="commitSchedule()" src="img/ok.png"
+		 align="right" width="64" height="64" title="Submit" class="ScheduleBtn">
 	  </fieldset>
-	  </form>
+	</form>
       </div>
 
-      <div class="w3-container"><p></p></div>
-      
       <div class="w3-panel w3-padding-16">
+	<br>
         <img id="plus" onclick="toggleSchedule()" src="img/plus.png"
 	     class="w3-display-bottommiddle w3-show"
-	     width="64" height="64" title="Schedule A Recording" class="Btn">
-        <img id="plus-gray" src="img/plus-gray.png"
-	     class="w3-display-bottommiddle w3-hide"
-	     width="64" height="64" title="Schedule A Recording" class="Btn">
+	     width="64" height="64" title="Schedule A Recording">
       </div>
       
     </div>
     
-    <div class="row">
+    <div id="calendar" class="w3-display-bottomright w3-hide">
       
-      <div class="box col-sm-4">
-	<div class="w3-panel w3-card w3-white w3-round-large w3-display-bottomright">
-	  <?php
-	     $url = "http://ipv4-api.hdhomerun.com/discover";
-	     $devices = json_decode(file_get_contents($url), true);
-
-	     $cnt = 0;
-	     foreach ($devices as $device) {
-	        $cnt += 1;
-	        $deviceUrl = $device['DiscoverURL'];
-	        $device_detail = json_decode(file_get_contents($deviceUrl), true);
-	        $cableCardUrl = $device['BaseURL'].'/cc.html';
-	     
-	        echo '<div>'.$device_detail['FriendlyName'].' '.$device_detail['DeviceID'].'</div>';
-	        echo '	<ul class="checklist">';
-	        echo '    <li class="_FwStatus warn">FW Version '.$device_detail['FirmwareVersion'].'</li>';
-	        echo '    <li><a class="_URL" href="'.$cableCardUrl.'">CableCARD&trade; Menu</a></li>';
-	        echo '  </ul>';
-	     }
-
-	     if ($cnt == 0) {
-	        echo '    <p>No HDHomeRun detected.</p>';
-	        echo '    <p>Please connect the HDHomeRun to your router and refresh the page.</p>';
-	        echo '    <p>HDHomeRun PRIME: Please remove the CableCard to allow detection to complete.</p>';
-	     }
-	     
-	  ?>
-	</div>
+      <div class="demo-section k-header" style="width:300px; text-align:center;">
+	<div id="cal"></div>
       </div>
       
+      <script>
+	$(document).ready(function() {
+	   // create Calendar from div HTML element
+	   $("#cal").kendoCalendar({
+	      value: new Date(),
+	      change: function() {
+	         var v = this.value();
+	         document.getElementById("theDate").innerHTML = v.toDateString();
+	      },
+	      footer: false
+	   });
+	   document.getElementById("theDate").innerHTML = new Date().toDateString();
+	});
+      </script>
     </div>
-    </div>
+    
     
   </body>
 </html>
