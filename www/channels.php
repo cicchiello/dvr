@@ -21,16 +21,16 @@
     
     <script>
        var prev = null;
-       function channelClick(channel) {
+       function channelClick(channelNum,channelName) {
           if (prev) {
 	     document.getElementById(prev).style.backgroundColor = "white";
 	     document.getElementById(prev).style.color = "black";
 	  }
-          var n = "row"+channel;
+          var n = "row"+channelNum;
           if (parent) {
              var f = parent.document.getElementById("channelSelectorFrame");
              if (f) {
-                f.callback(channel);
+                f.callback(channelNum,channelName);
              } else {
                 document.getElementById("result").innerHTML = "no channelSelectorFrame";
              }
@@ -66,7 +66,7 @@
 	      foreach ($lineupJson as $channel) {
 	         $num = $channel['GuideNumber'];
 		 $name = $channel['GuideName'];
-		 $func = "if(this.checked){channelClick('".$num."');}";
+		 $func = "if(this.checked){channelClick('".$num."','".$name."');}";
 		 echo '<a onclick="'.$func.'">';
 		 echo '<tr id="row'.$num.'" style="background-color:white; color=black" onclick="'.$func.'">';
 		 echo '   <td><input type="radio" onclick="'.$func.'" name="channel" value="'.$num.'"></td>';
