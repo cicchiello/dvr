@@ -7,7 +7,6 @@
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css">
   
   <link href="./w3.css" media="all" rel="stylesheet">
-  <link href="./style.css" media="all" rel="stylesheet">
   
   <link rel="stylesheet" href="http://cdn.kendostatic.com/2015.1.429/styles/kendo.common-material.min.css" />
   <link rel="stylesheet" href="http://cdn.kendostatic.com/2015.1.429/styles/kendo.material.min.css" />
@@ -19,6 +18,8 @@
   
   <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
   
+  <link href="./style.css" media="all" rel="stylesheet" />
+  
   <style>
      table, th, td {
         border: 1px solid black;
@@ -29,7 +30,7 @@
         padding: 5px;
         text-align: left;
      }
-
+     
      .icon, .menuArea {
         display: block; /* block element by default */
         z-index: 99; /* Make sure it does not overlap */
@@ -106,14 +107,24 @@
           var schdArea = document.getElementById("scheduled");
           var btn = document.getElementById("plus");
           var cal = document.getElementById("calendar");
+          var chSelector = document.getElementById("channelSelector");
           schdArea.className = schdArea.className.replace(" w3-show", " w3-hide");
           newSchdArea.className = newSchdArea.className.replace(" w3-hide", " w3-show");
           cal.className = cal.className.replace(" w3-hide", " w3-show");
           btn.className = btn.className.replace(" w3-show", " w3-hide");
+          chSelector.className = chSelector.className.replace("w3-hide", "w3-show");
        } else {
           location.reload();
        }
     }
+
+    function init() {
+       var f = document.getElementById("channelSelectorFrame");
+       f.callback = function onChannel(channel) {
+          document.getElementById("theChannel").innerHTML=channel;
+       };
+    }
+    
   </script>
 
   </head>
@@ -135,7 +146,7 @@
 	        $numRecordings += json_decode(file_get_contents($recordingsUrl), true)['total_rows'];
 	     }
 	  ?>
-  <body class="bg">
+  <body class="bg" onload="init()">
 
     <div class="menuArea">
       <div id="menuItems" class="w3-show">
@@ -203,7 +214,8 @@
       </div>
     </div>
       
-    <div id="newSchedule" class="w3-container w3-display-topmiddle w3-panel w3-card w3-white w3-padding-16 w3-round-large w3-hide">
+    <div id="newSchedule"
+	 class="w3-container w3-display-topmiddle w3-panel w3-card w3-white w3-padding-16 w3-round-large w3-hide">
       <form id="newRecording">
 	<fieldset>
 	  <legend>Schedule Recording:</legend>
@@ -284,10 +296,13 @@
 	});
       </script>
     </div>
-    
-    <iframe src="./channels.php" height="90%" frameborder="1" style="float:right; z-index:999;">
-      <p>Your browser does not support iframes.</p>
-    </iframe>
+
+    <div id="channelSelector" style="height:100%; padding:20px; z-index:999" class="w3-hide">
+      <iframe id="channelSelectorFrame" src="./channels.php"
+	      height="90%" frameborder="1" style="float:right; z-index:999">
+	<p>Your browser does not support iframes.</p>
+      </iframe>
+    </div>
     
   </body>
 </html>

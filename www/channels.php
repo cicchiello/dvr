@@ -4,12 +4,41 @@
   
     <style>
       .bg {
-	  background-color: #00ff00;
 	  height: 100%;
       }
+      
+      table, th, td {
+      	  border: 1px solid black;
+          border-collapse: collapse;
+      }
+     
+      th, td {
+          padding: 5px;
+          text-align: left;
+      }
+     
     </style>
     
     <script>
+       var prev = null;
+       function channelClick(channel) {
+          if (prev) {
+	     document.getElementById(prev).style.backgroundColor = "white";
+	     document.getElementById(prev).style.color = "black";
+	  }
+          var n = "row"+channel;
+          if (parent) {
+             var f = parent.document.getElementById("channelSelectorFrame");
+             if (f) {
+                f.callback(channel);
+             } else {
+                document.getElementById("result").innerHTML = "no channelSelectorFrame";
+             }
+          }
+          document.getElementById(n).style.backgroundColor = "blue";
+	  document.getElementById(n).style.color = "white";
+	  prev = n;
+       }
     </script>
 
   </head>
@@ -30,15 +59,24 @@
   ?>
 
   <body class="bg">
-     <table style="width:90%">
-        <?php
-	   foreach ($lineupJson as $channel) {
-	      echo '<tr>';
-	      echo '   <td>'.$channel['GuideNumber'].'</td>';
-	      echo '</tr>';
-	   }
-        ?>
-     </table>
+     <p id="result"></p>
+     <form action="channelClick()">
+        <table style="width:100%; overflow:scroll">
+           <?php
+	      foreach ($lineupJson as $channel) {
+	         $num = $channel['GuideNumber'];
+		 $name = $channel['GuideName'];
+		 $func = "if(this.checked){channelClick('".$num."');}";
+		 echo '<a onclick="'.$func.'">';
+		 echo '<tr id="row'.$num.'" style="background-color:white; color=black" onclick="'.$func.'">';
+		 echo '   <td><input type="radio" onclick="'.$func.'" name="channel" value="'.$num.'"></td>';
+	         echo '   <td><b>'.$num.'</b></td>';
+	         echo '   <td><b>'.$name.'</b></td>';
+	         echo '</tr></a>';
+	      }
+           ?>
+        </table>
+     </form>
   </body>
   
 </html>
