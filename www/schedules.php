@@ -30,43 +30,26 @@
         text-align: left;
      }
 
-     #menuArea {
+     .icon, .menuArea {
         display: block; /* block element by default */
-        position: fixed; /* Fixed position */
-        top: 20px; /* Place the button at the top of the page */
-        left: 30px; /* Place the button 30px from the left */
         z-index: 99; /* Make sure it does not overlap */
         border: none; /* Remove borders */
         outline: none; /* Remove outline */
         background-color: #44661b; /* Set a background color */
-        color: white; /* Text color */
         padding: 5px; /* Some padding */
         border-radius: 10px; /* Rounded corners */
      }
-
-     #plus {
-        display: block; /* block element by default */
+     
+     .menuArea {
         position: fixed; /* Fixed position */
-        z-index: 99; /* Make sure it does not overlap */
-        border: none; /* Remove borders */
-        outline: none; /* Remove outline */
-        background-color: #44661b; /* Set a background color */
-        cursor: pointer; /* Add a mouse pointer on hover */
-        padding: 5px; /* Some padding */
-        border-radius: 10px; /* Rounded corners */
+        top: 20px; /* Place the button at the top of the page */
+        left: 30px; /* Place the button 30px from the left */
+        color: white; /* Text color */
      }
 
      .Btn:hover {
         background-color: #465702; /* Add a dark-grey background on hover */
         outline: none; /* Remove outline */
-     }
-     
-     #plus:hover {
-        background-color: #465702; /* Add a dark-grey background on hover */
-        outline: none; /* Remove outline */
-     }
-     
-     .ScheduleBtn:hover {
         cursor: pointer; /* Add a mouse pointer on hover */
      }
      
@@ -108,6 +91,12 @@
         cursor: pointer; /* Add a mouse pointer on hover */
      }
 
+     iframe {
+	overflow: scroll !important;
+	height: 100%;
+	border: 4px solid blue;
+     }
+     
   </style>
 
   <script>
@@ -148,11 +137,11 @@
 	  ?>
   <body class="bg">
 
-    <div id="menuArea">
+    <div class="menuArea">
       <div id="menuItems" class="w3-show">
 	<a class="_URL" href="./index.php">
 	  <div class="menuLbl Btn" title="Home">
-            <img src="img/home.png" width="64" height="64" class="Btn">
+            <img src="img/home.png" width="64" height="64">
 	    <span style="color:#7a9538"><p></p></span>
 	  </div>
 	</a>
@@ -206,78 +195,76 @@
 	?>
       </div>
 	
-      <div id="newSchedule" class="w3-panel w3-card w3-white w3-padding-16 w3-round-large w3-hide">
-	<form id="newRecording">
-	  <fieldset>
-	    <legend>Schedule Recording:</legend>
-	    <table>
-	      <tr>
-		<td>Channel:</td>
-		<td><b id="theChannel" style="color:blue" class="w3-right">TBD</b></td>
-	      </tr>
-	      <tr>
-		<td>Description:</td>
-		<td>
-		  <?php
-		     $s = 'Recording on '.date('d-M-y H:i');
-		     echo '<input type="text" dir="rtl" style="color:blue" size="30" placeholder="'.$s.'">';
-		  ?>
-		</td>
-	      </tr>
-	      <tr>
-		<td>Date:</td>
-		<td><b id="theDate" style="color:blue" class="w3-right">TBD</b></td>
-	      </tr>
-	      <tr>
-		<td>Start Time:</td>
-		<td><input type="time" style="color:blue" class="w3-right"
-			   name="startTime"></td>
-	      </tr>
-	      <tr>
-		<td>Duration:</td>
-		<td>
-		  <select id="duration" dir="rtl" style="color:blue" class="w3-right" form="newRecording">
-		    <option value="30">30 minutes</option>
-		    <option value="60">1 hour</option>
-		    <option value="90">90 minutes</option>
-		    <option value="120">2 hours</option>
-		    <option value="180">3 hours</option>
-		    <option value="240">4 hours</option>
-		  </select>
-		</td>
-	      </tr>
-	      <tr>
-		<td>Start Early?:</td>
-		<td>
-		  <select id="overlap" dir="rtl" style="color:blue" class="w3-right" form="newRecording">
-		    <option value="0">none</option>
-		    <option value="5">5 minutes</option>
-		    <option value="10">10 minutes</option>
-		    <option value="15">15 minutes</option>
-		  </select>
-		</td>
-	      </tr>
-	    </table>
-	    <br>
-	    <img id="cancelSchedule" onclick="toggleSchedule()" src="img/cancel.png"
-		 width="64" height="64" title="Cancel" class="ScheduleBtn">
-	    <img id="commitSchedule" onclick="commitSchedule()" src="img/ok.png"
-		 align="right" width="64" height="64" title="Submit" class="ScheduleBtn">
-	  </fieldset>
-	</form>
-      </div>
-
       <div class="w3-panel w3-padding-16">
 	<br>
         <img id="plus" onclick="toggleSchedule()" src="img/plus.png"
-	     class="w3-display-bottommiddle w3-show"
+	     class="icon w3-display-bottommiddle Btn w3-show"
 	     width="64" height="64" title="Schedule A Recording">
       </div>
-      
     </div>
-    
-    <div id="calendar" class="w3-display-bottomright w3-hide">
       
+    <div id="newSchedule" class="w3-container w3-display-topmiddle w3-panel w3-card w3-white w3-padding-16 w3-round-large w3-hide">
+      <form id="newRecording">
+	<fieldset>
+	  <legend>Schedule Recording:</legend>
+	  <table>
+	    <tr>
+	      <td>Channel:</td>
+	      <td><b id="theChannel" style="color:blue" class="w3-right">TBD</b></td>
+	    </tr>
+	    <tr>
+	      <td>Description:</td>
+	      <td>
+		<?php
+		   $s = 'Recording on '.date('d-M-y H:i');
+		   echo '<input type="text" dir="rtl" style="color:blue" size="30" placeholder="'.$s.'">';
+		   ?>
+	      </td>
+	    </tr>
+	    <tr>
+	      <td>Date:</td>
+	      <td><b id="theDate" style="color:blue" class="w3-right">TBD</b></td>
+	    </tr>
+	    <tr>
+	      <td>Start Time:</td>
+	      <td><input type="time" style="color:blue" class="w3-right"
+			 name="startTime"></td>
+	    </tr>
+	    <tr>
+	      <td>Duration:</td>
+	      <td>
+		<select id="duration" dir="rtl" style="color:blue" class="w3-right" form="newRecording">
+		  <option value="30">30 minutes</option>
+		  <option value="60">1 hour</option>
+		  <option value="90">90 minutes</option>
+		  <option value="120">2 hours</option>
+		  <option value="180">3 hours</option>
+		  <option value="240">4 hours</option>
+		</select>
+	      </td>
+	    </tr>
+	    <tr>
+	      <td>Start Early?:</td>
+	      <td>
+		<select id="overlap" dir="rtl" style="color:blue" class="w3-right" form="newRecording">
+		  <option value="0">none</option>
+		  <option value="5">5 minutes</option>
+		  <option value="10">10 minutes</option>
+		  <option value="15">15 minutes</option>
+		</select>
+	      </td>
+	    </tr>
+	  </table>
+	  <br>
+	  <img id="cancelSchedule" onclick="toggleSchedule()" src="img/cancel.png"
+	       width="64" height="64" title="Cancel" class="Btn">
+	  <img id="commitSchedule" onclick="commitSchedule()" src="img/ok.png"
+	       align="right" width="64" height="64" title="Submit" class="Btn">
+	</fieldset>
+      </form>
+    </div>
+
+    <div id="calendar" class="w3-display-bottomleft w3-hide">      
       <div class="demo-section k-header" style="width:300px; text-align:center;">
 	<div id="cal"></div>
       </div>
@@ -298,6 +285,9 @@
       </script>
     </div>
     
+    <iframe src="./channels.php" height="90%" frameborder="1" style="float:right; z-index:999;">
+      <p>Your browser does not support iframes.</p>
+    </iframe>
     
   </body>
 </html>
