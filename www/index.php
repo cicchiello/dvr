@@ -77,6 +77,11 @@
 	     
 	        $numChannels += sizeof(json_decode(file_get_contents($lineupJsonUrl), true));
 	        $numRecordings += json_decode(file_get_contents($recordingsUrl), true)['total_rows'];
+
+	        $scheduledUrl = "https://jfcenterprises.cloudant.com/dvr/_design/dvr/_view/scheduled";
+	        $result = json_decode(file_get_contents($scheduledUrl), true);
+	        $scheduled = $result['rows'];
+	        $numScheduled = $result['total_rows'];
 	     }
 	  ?>
   <body class="bg">

@@ -1,0 +1,12 @@
+{
+  "_id": "_design/dvr",
+  "views": {
+    "recordings": {
+      "map": "function (doc) {\n  if (doc.type === \"recording\")\n    emit(doc._id, doc);\n}"
+    },
+    "scheduled": {
+      "map": "function (doc) {\n  if (doc.type === \"scheduled\")\n    emit(doc._id, doc);\n}"
+    }
+  },
+  "language": "javascript"
+}

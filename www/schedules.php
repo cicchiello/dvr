@@ -19,63 +19,14 @@
   <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
 
   <link href="./style.css" media="all" rel="stylesheet" />
+  <link href="./table.css" media="all" rel="stylesheet" />
+  <link href="./menu.css" media="all" rel="stylesheet" />
   <link href="./search.css" media="all" rel="stylesheet" />
   
   <style>
-     table, th, td {
-        border: 1px solid black;
-        border-collapse: collapse;
-     }
-     
-     th, td {
-        padding: 5px;
-        text-align: left;
-     }
-     
-     .menuIcon, .menuArea {
-        display: block; /* block element by default */
-        z-index: 99; /* Make sure it does not overlap */
-        border: none; /* Remove borders */
-        outline: none; /* Remove outline */
-        background-color: #44661b; /* Set a background color */
-        padding: 5px; /* Some padding */
-        border-radius: 10px; /* Rounded corners */
-     }
-     
-     .menuArea {
-        position: fixed; /* Fixed position */
-        top: 20px; /* Place the button at the top of the page */
-        left: 30px; /* Place the button 30px from the left */
-        color: white; /* Text color */
-     }
-
-     .Btn:hover {
-        background-color: #465702; /* Add a dark-grey background on hover */
-        outline: none; /* Remove outline */
-        cursor: pointer; /* Add a mouse pointer on hover */
-     }
-     
      .popupBtn:hover {
         outline: none; /* Remove outline */
         cursor: pointer; /* Add a mouse pointer on hover */
-     }
-     
-     .menuLbl {
-        height: 64px;
-        width: 200px;
-        position: relative;
-        border: none;
-        outline: none; /* Remove outline */
-     }
-     
-     .menuLbl p {
-        margin: 0;
-        position: absolute;
-        top: 50%;
-        left: 128px;
-        white-space: nowrap;
-        -ms-transform: translate(-50%, -50%);
-        transform: translate(-50%, -50%);
      }
      
      input[type=text], select {
@@ -202,8 +153,14 @@
 	        $lineupJsonUrl = $device_detail['LineupURL'];
 	        $recordingsUrl = "https://jfcenterprises.cloudant.com/dvr/_design/dvr/_view/recordings";
 	     
-	        $numChannels += sizeof(json_decode(file_get_contents($lineupJsonUrl), true));
+	        $lineup = json_decode(file_get_contents($lineupJsonUrl), true);
+	        $numChannels += sizeof($lineup);
 	        $numRecordings += json_decode(file_get_contents($recordingsUrl), true)['total_rows'];
+	     
+	        $scheduledUrl = "https://jfcenterprises.cloudant.com/dvr/_design/dvr/_view/scheduled";
+	        $result = json_decode(file_get_contents($scheduledUrl), true);
+	        $scheduled = $result['rows'];
+	        $numScheduled = $result['total_rows'];
 	     }
 	  ?>
   <body class="bg" onload="init()">
@@ -238,22 +195,20 @@
       <div id="scheduled" class="w3-panel w3-card w3-white w3-padding-16 w3-round-large w3-show">
 
 	<?php
-	   $url = "https://jfcenterprises.cloudant.com/dvr/_design/dvr/_view/recordings";
-	   $json = json_decode(file_get_contents($url), true);
-	   
 	   $cnt = 0;
-	   foreach ($json['rows'] as $recording) {
+	   foreach ($scheduled as $item) {
+	      $schedule = $item['value'];
 	      if ($cnt == 0) {
 	         //echo '<ul class="checklist">';
 		 echo '<table style="width:100%">';
 	      }
-	      //echo "<li><b>".$recording['value']['name']."</b> and this isn't bold</li>";
+	      //echo "<li><b>".$schedule['description']."</b> and this isn't bold</li>";
 	      echo '<tr>';
-	      echo '  <th rowspan="2">'.$recording['value']['name'].'</th>';
-	      echo '  <td>55577854</td>';
+	      echo '  <th rowspan="2">'.$schedule['description'].'</th>';
+	      echo '  <td>'.$schedule['record-start'].'</td>';
 	      echo '</tr>';
 	      echo '<tr>';
-	      echo '  <td>55577855</td>';
+	      echo '  <td>'.$schedule['record-end'].'</td>';
 	      echo '</tr>';
 	      $cnt += 1;
 	   }
@@ -276,7 +231,7 @@
       
     <div id="newSchedule"
 	 class="w3-container w3-display-topmiddle w3-panel w3-card w3-white w3-padding-16 w3-round-large w3-hide">
-      <form id="newRecording" action="./test.php" method="GET">
+      <form id="newRecording" action="./commit.php" method="GET">
 	<fieldset>
 	  <legend>Schedule Recording:</legend>
 	  <input type="hidden" name="device" value=<?php echo '"'.$deviceId.'"';?> >

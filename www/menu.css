@@ -1,0 +1,41 @@
+     .Btn:hover {
+        background-color: #465702; /* Add a dark-grey background on hover */
+        outline: none; /* Remove outline */
+        cursor: pointer; /* Add a mouse pointer on hover */
+     }
+     
+     .menuIcon, .menuArea {
+        display: block; /* block element by default */
+        z-index: 99; /* Make sure it does not overlap */
+        border: none; /* Remove borders */
+        outline: none; /* Remove outline */
+        background-color: #44661b; /* Set a background color */
+        padding: 5px; /* Some padding */
+        border-radius: 10px; /* Rounded corners */
+     }
+     
+     .menuArea {
+        position: fixed; /* Fixed position */
+        top: 20px; /* Place the button at the top of the page */
+        left: 30px; /* Place the button 30px from the left */
+        color: white; /* Text color */
+     }
+
+     .menuLbl {
+        height: 64px;
+        width: 200px;
+        position: relative;
+        border: none;
+        outline: none; /* Remove outline */
+     }
+     
+     .menuLbl p {
+        margin: 0;
+        position: absolute;
+        top: 50%;
+        left: 128px;
+        white-space: nowrap;
+        -ms-transform: translate(-50%, -50%);
+        transform: translate(-50%, -50%);
+     }
+     
