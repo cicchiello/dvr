@@ -32,6 +32,8 @@ apt-get -y upgrade
 apt-get -y install apache2 apache2-utils
 apt-get -y install libapache2-mod-php5 php5 php-pear php5-xcache php5-mysql php5-curl php5-gd
 
+pip install psutil
+
 if [ ! -d "/mnt/${mntname}/dvr" ]
 then
     mkdir "/mnt/${mntname}/dvr"
