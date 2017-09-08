@@ -1,0 +1,10 @@
+#!/bin/bash
+
+/bin/echo `date` >> /home/pi/logs/dvr-startup.log
+/bin/echo "waiting for 10s..." >> /home/pi/logs/dvr-startup.log
+sleep 10
+
+echo `whoami`
+echo "before invoking" >> /home/pi/logs/dvr-startup.log
+python -u /home/pi/dvr/py/recorder.py >> /home/pi/logs/dvr-recorder.log
+echo "recorder.py shutdown" >> /home/pi/logs/dvr-startup.log

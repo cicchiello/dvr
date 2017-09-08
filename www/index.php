@@ -63,6 +63,18 @@
   </head>
   
 	  <?php
+             $mode = "dev";
+	     $ProdDbBase = 'https://jfcenterprises.cloudant.com';
+	     $DevDbBase = 'http://joes-mac-mini:5984';
+	     $Db = 'dvr';
+	     
+	     if ($mode == "dev") {
+	        $DbBase = $DevDbBase;
+	     } else {
+	        $DbBase = $ProdDbBase;
+	     }
+	     $DbViewBase = $DbBase.'/'.$Db.'/_design/dvr/_view';
+
 	     $url = "http://ipv4-api.hdhomerun.com/discover";
 	     $devices = json_decode(file_get_contents($url), true);
 
@@ -73,12 +85,12 @@
 	        $deviceUrl = $device['DiscoverURL'];
 	        $device_detail = json_decode(file_get_contents($deviceUrl), true);
 	        $lineupJsonUrl = $device_detail['LineupURL'];
-	        $recordingsUrl = "https://jfcenterprises.cloudant.com/dvr/_design/dvr/_view/recordings";
+	        $recordingsUrl = $DbViewBase.'/recordings';
 	     
 	        $numChannels += sizeof(json_decode(file_get_contents($lineupJsonUrl), true));
 	        $numRecordings += json_decode(file_get_contents($recordingsUrl), true)['total_rows'];
 
-	        $scheduledUrl = "https://jfcenterprises.cloudant.com/dvr/_design/dvr/_view/scheduled";
+	        $scheduledUrl = $DbViewBase.'/scheduled';
 	        $result = json_decode(file_get_contents($scheduledUrl), true);
 	        $scheduled = $result['rows'];
 	        $numScheduled = $result['total_rows'];

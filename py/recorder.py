@@ -1,3 +1,5 @@
+#!/usr/bin/python
+
 import json
 import calendar
 import time
@@ -5,17 +7,43 @@ import requests
 import os.path
 import subprocess
 import psutil
+import time
+import datetime
+
 
 SemaphoreDirtyFile = '/tmp/dbtouched'
 
-DbKey = 'socksookeesayedwerameate'
-DbPswd = 'c2d5c73bc067e9f73fd568c3ef783232fb2d0498'
+ProdDbKey = 'socksookeesayedwerameate'
+ProdDbPswd = 'c2d5c73bc067e9f73fd568c3ef783232fb2d0498'
 
-SCHEDULE_URL = 'https://jfcenterprises.cloudant.com/dvr/_design/dvr/_view/scheduled'
-CAPTURING_URL = 'https://jfcenterprises.cloudant.com/dvr/_design/dvr/_view/capturing'
-UPDATE_URL = 'https://jfcenterprises.cloudant.com/dvr'
+ProdDbBase = 'https://jfcenterprises.cloudant.com'
+DevDbBase = 'http://joes-mac-mini:5984'
+
+ProdDb = 'dvr'
+DevDb = 'dvr'
+
+ProdDbWriteAuth = (ProdDbKey,ProdDbPswd)
+DevDbWriteAuth = None
+
+mode = "dev"
+
+DbBase = ProdDbBase if (mode == "prod") else DevDbBase
+Db = ProdDb if (mode == "prod") else DevDb
+DbWriteAuth = ProdDbWriteAuth if (mode == "prod") else DevDbWriteAuth
+
+ALL_OBJS_URL = DbBase+'/'+Db+'/_all_docs'
+BULK_DOCS_URL = DbBase+'/'+Db+'/_bulk_docs'
+POST_URL = DbBase+'/'+Db
+VIEW_BASE = DbBase+'/'+Db+'/_design/dvr/_view/'
+
+SCHEDULE_URL = VIEW_BASE+'scheduled'
+CAPTURING_URL = VIEW_BASE+'capturing'
 
 activeCaptureCnt = 0
+
+def nowstr():
+    fmt = 'INFO: %Y-%b-%d %H:%M:%S :'
+    return datetime.datetime.today().strftime('INFO: %Y-%b-%d %H:%M:%S :')
 
 def fetchScheduledResultSet():
     return json.loads(requests.get(SCHEDULE_URL).text)
@@ -76,7 +104,7 @@ def selectNextStart(resultSet,now):
 
 
 def selectNextStop(resultSet,now):
-    if (resultSet == None):
+    if (len(resultSet) == 0):
         return None;
     
     earliest = 9999999999
@@ -84,7 +112,7 @@ def selectNextStop(resultSet,now):
     for i in range(0, len(resultSet['rows'])):
         #print "row[",i,"]:",json.dumps(v['rows'][i]['value'],indent=3)
         r = resultSet['rows'][i]['value']
-        stime = r['record-stop']
+        stime = r['record-end']
         if ((stime > now) and (stime < now + 60) and (stime < earliest)):
             mini = i
             ealiest = stime
@@ -114,7 +142,7 @@ def getCapturingResultSet(prev):
     global captureSemaphoreCnt
     global activeCaptureCnt
     if (activeCaptureCnt):
-        resetIt = prev == None
+        resetIt = len(prev) == 0
         if (not resetIt):
             captureSemaphoreCnt += 1
             resetIt = captureSemaphoreCnt > 5
@@ -130,33 +158,47 @@ def getCapturingResultSet(prev):
 def handleMissedSchedules(rs, now):
     missedCompletely = selectNextMissedEnd(rs, now)
     while (missedCompletely != None):
-        print "Found at least one that I missed completely!", json.dumps(missedCompletely,indent=3)
+        print nowstr(),"INFO: Found one that I missed completely!"
         missedCompletely['type'] = 'error'
         missedCompletely['errmsg'] = 'schedule missed completely'
         missedCompletely['missed-timestamp'] = str(now)
         id = missedCompletely['_id']
         del missedCompletely['_id']
         #print "Here's the update I'm going to make:", json.dumps(missedCompletely,indent=3)
-        url = UPDATE_URL+'/'+id
-        r = requests.put(url, auth=(DbKey, DbPswd), json=missedCompletely)
+        url = POST_URL+'/'+id
+        r = requests.put(url, auth=DbWriteAuth, json=missedCompletely)
         #print r.json()
-        rs = fetchScheduledResultSet(None)
+        rs = fetchScheduledResultSet()
         missedCompletely = selectNextMissedEnd(rs,now)
     return rs
 
 
+def testInvoke(n):
+    return subprocess.Popen(["/usr/bin/python", "recording-proxy.py"], shell=True)
+    
+def devInvoke(n):
+    id = n['_id']
+    url = n['url']
+    cmdArr = ['/usr/bin/curl','-X','GET',url,'-i','-o','/mnt/mybook/dvr/'+id+'.mp4'];
+    print nowstr(),"INFO: cmd: ",cmdArr
+    return subprocess.Popen(cmdArr, shell=False)
+
+def prodInvoke(n):
+    print "Hi"
+    
 def startCapture(n, now):
     global activeCaptureCnt
-    proc = subprocess.Popen(["/usr/bin/python", "test.py"], shell=True)
+    proc = devInvoke(n) if (mode == "dev") else prodInvoke(n)
+    print nowstr(),"INFO: returned from invoke"
     activeCaptureCnt += 1
     n['type'] = 'capturing'
     n['capture-start-timestamp'] = str(now)
     n['pid'] = str(proc.pid)
     id = n['_id']
     del n['_id']
-    print "Here's the update I'm going to make:", json.dumps(n,indent=3)
-    url = UPDATE_URL+'/'+id
-    r = requests.put(url, auth=(DbKey, DbPswd), json=n)
+    print nowstr(),"Here's the update I'm going to make:", json.dumps(n,indent=3)
+    url = POST_URL+'/'+id
+    r = requests.put(url, auth=DbWriteAuth, json=n)
     #print r.json()
 
 
@@ -171,9 +213,9 @@ def stopCapture(s, now):
     s['capture-stop-timestamp'] = str(now)
     id = s['_id']
     del s['_id']
-    print "Here's the update I'm going to make:", json.dumps(s,indent=3)
-    url = UPDATE_URL+'/'+id
-    r = requests.put(url, auth=(DbKey, DbPswd), json=s)
+    print nowstr(),"Here's the update I'm going to make:", json.dumps(s,indent=3)
+    url = POST_URL+'/'+id
+    r = requests.put(url, auth=DbWriteAuth, json=s)
     #print r.json()
 
     
@@ -181,7 +223,7 @@ def handleLateStarts(rs, now):
     #print json.dumps(rs,indent=3)
     late = selectNextMissedStart(rs, now)
     while (late != None):
-        print "Found at least schedule that should have started already!", json.dumps(late,indent=3)
+        print nowstr(),"INFO: Found at least one schedule that should have started already!  Starting now." #, json.dumps(late,indent=3)
         startCapture(late, now)
         rs = fetchScheduledResultSet()
         late = selectNextMissedStart(rs, now)
@@ -189,50 +231,55 @@ def handleLateStarts(rs, now):
 
 
 def handleNextStart(rs, now):
-    print json.dumps(rs,indent=3)
+    #print json.dumps(rs,indent=3)
     n = selectNextStart(rs, now)
     while (n != None):
-        print "Found a schedule that starts within a minute:", json.dumps(n,indent=3)
+        print nowstr(),"INFO: Found a schedule that starts within a minute; starting it now"
         startCapture(n, now)
-        rs = fetchScheduledResultSet(None)
+        rs = fetchScheduledResultSet()
         n = selectNextStart(rs, now)
     return rs
 
 
 def handleNextStop(crs, now):
+    #print "trace 1; crs: ",crs
     s = selectNextStop(crs, now)
+    #print "trace 2"
     while (s != None):
-        print "Found an active capture that should be stopped:", json.dumps(s,indent=3)
+        print nowstr(),"INFO: Found an active capture that should be stopped:", json.dumps(s,indent=3)
         stopCapture(s, now)
         crs = fetchCapturingResultSet()
         s = selectNextStop(crs, now)
+    #print "trace 3"
     return crs
 
 
             
 srs = getScheduleResultSet(None)
-crs = getCapturingResultSet(None)
+crs = getCapturingResultSet([])
 while (True):
     now = calendar.timegm(time.gmtime())
-    print "now:", now
+    print nowstr(), "now:", now
     print ""
 
-    print "looking for completely missed..."
+    print nowstr(),"looking for completely missed..."
     srs = handleMissedSchedules(srs, now)
     print ""
 
-    print "looking for late..."
+    print nowstr(),"looking for late..."
     srs = handleLateStarts(srs, now)
     print ""
     
-    print "looking for ones that should start now..."
+    print nowstr(),"looking for ones that should start now..."
     srs = handleNextStart(srs, now)
     print ""
 
-    print "looking for ones that should stop now..."
+    print nowstr(),"looking for ones that should stop now..."
     crs = handleNextStop(crs, now)
     print ""
 
     time.sleep(50)
     srs = getScheduleResultSet(srs)
     crs = getCapturingResultSet(crs)
+    #print "srs: ", srs
+    #print "crs: ", crs

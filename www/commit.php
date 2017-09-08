@@ -44,31 +44,50 @@
 
   </head>
   
-	  <?php
-	     $url = "http://ipv4-api.hdhomerun.com/discover";
-	     $devices = json_decode(file_get_contents($url), true);
+         <?php
+            $mode = "dev";
+	    $ProdDbBase = 'https://jfcenterprises.cloudant.com';
+	    $DevDbBase = 'http://joes-mac-mini:5984';
+	    $Db = 'dvr';
+	    
+	    $key = 'socksookeesayedwerameate';
+	    $pswd = 'c2d5c73bc067e9f73fd568c3ef783232fb2d0498';
+	    $ProdWriteDb = 'https://'.$key.':'.$pswd.'@jfcenterprises.cloudant.com/dvr';
+	    $DevWriteDb = 'http://joes-mac-mini:5984/dvr';
+	    
+	    if ($mode == "dev") {
+	       $DbBase = $DevDbBase;
+	       $WriteDb = $DevWriteDb;
+	    } else {
+	       $DbBase = $ProdDbBase;
+	       $WriteDb = $ProdWriteDb;
+	    }
+	    $DbViewBase = $DbBase.'/'.$Db.'/_design/dvr/_view';
+	    
+	    $url = "http://ipv4-api.hdhomerun.com/discover";
+	    $devices = json_decode(file_get_contents($url), true);
+	    
+	    $numRecordings = 0;
+	    $numChannels = 0;
+	    $numScheduled = 0;
+	    $deviceId = "TBD";
+	    foreach ($devices as $device) {
+	       $deviceUrl = $device['DiscoverURL'];
+	       $device_detail = json_decode(file_get_contents($deviceUrl), true);
+	       $deviceId = $device_detail['DeviceID'];
+	       $lineupJsonUrl = $device_detail['LineupURL'];
+	       $recordingsUrl = $DbViewBase.'/recordings';
+	    
+	       $lineupJson = json_decode(file_get_contents($lineupJsonUrl), true);
+	       $numChannels += sizeof($lineupJson);
+	       $numRecordings += json_decode(file_get_contents($recordingsUrl), true)['total_rows'];
 
-	     $numRecordings = 0;
-	     $numChannels = 0;
-	     $numScheduled = 0;
-	     $deviceId = "TBD";
-	     foreach ($devices as $device) {
-	        $deviceUrl = $device['DiscoverURL'];
-	        $device_detail = json_decode(file_get_contents($deviceUrl), true);
-	        $deviceId = $device_detail['DeviceID'];
-	        $lineupJsonUrl = $device_detail['LineupURL'];
-	        $recordingsUrl = "https://jfcenterprises.cloudant.com/dvr/_design/dvr/_view/recordings";
-	     
-	        $lineupJson = json_decode(file_get_contents($lineupJsonUrl), true);
-	        $numChannels += sizeof($lineupJson);
-	        $numRecordings += json_decode(file_get_contents($recordingsUrl), true)['total_rows'];
-	     
-	        $scheduledUrl = "https://jfcenterprises.cloudant.com/dvr/_design/dvr/_view/scheduled";
-	        $result = json_decode(file_get_contents($scheduledUrl), true);
-	        $scheduled = $result['rows'];
-	        $numScheduled = $result['total_rows'];
-	     }
-	   ?>
+	       $scheduledUrl = $DbViewBase.'/scheduled';
+	       $result = json_decode(file_get_contents($scheduledUrl), true);
+	       $scheduled = $result['rows'];
+	       $numScheduled = $result['total_rows'];
+	    }
+	  ?>
 	  
   <body class="bg" onload="init()">
 
@@ -138,14 +157,17 @@
   
 	<?php
 	   $chan = $_GET["chan"];
-	   $url = $lineupJson[$chan]['URL'];
+	   $url = "undefined";
+	   foreach ($lineupJson as $d) {
+	      if ($d['GuideNumber'] == $chan) {
+	         $url = $d['URL'];
+	      }
+	   }
 	   $otime = $_GET["overlap"]*60;
 	   $stime = $_GET["startTime"] - $otime;
 	   $etime = $_GET["duration"]*60 + $stime + $otime + $otime;
 
-	   $key = "socksookeesayedwerameate";
-	   $pswd = "c2d5c73bc067e9f73fd568c3ef783232fb2d0498";
-	   $couchUrl = "https://".$key.":".$pswd."@jfcenterprises.cloudant.com/dvr";
+	   $couchUrl = $WriteDb;
 	   $data = array(
 	      'type' => "scheduled",
 	      'device' => $_GET["device"],
@@ -166,7 +188,7 @@
 	      'Content-Length: '.strlen($dataStr))
 	   );
 	   $resultStr = curl_exec($ch);
-           //var_dump($resultStr);
+           var_dump($resultStr);
 	   $result = json_decode($resultStr, true);
 
 	   if ($result['ok']) {
