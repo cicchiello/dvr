@@ -23,29 +23,77 @@ echo "work dir: "${here}
 mntname=$(echo ${1} | sed 's?/mnt/??g' | sed 's?/$??g')
 
 echo "Setting up to record to mount point: /mnt/${mntname}/dvr"
-echo "Clients can access DVR via http://mediaserver/dvr/index.php"
-echo ""
 
 
-apt-get update
+apt-get -y update
 apt-get -y upgrade
-apt-get -y install apache2 apache2-utils
-apt-get -y install libapache2-mod-php5 php5 php-pear php5-xcache php5-mysql php5-curl php5-gd
+echo "Done update and upgrade..."
 
-pip install psutil
+if [ ! -f "${here}/.apache-installed" ]
+then
+    apt-get -y install apache2 apache2-utils
+    apt-get -y install libapache2-mod-php5 php5 php-pear php5-xcache php5-mysql php5-curl php5-gd
+    touch "${here}/.apache-installed"
+else
+    echo "Apache installations appear to be done; skipping..."
+fi
+
+if [ ! -f "${here}/.psutil-installed" ]
+then
+    pip install psutil
+    touch "${here}/.psutil-installed"
+else
+    echo "Python psutil appears to be installed; skipping..."
+fi
 
 if [ ! -d "/mnt/${mntname}/dvr" ]
 then
     mkdir "/mnt/${mntname}/dvr"
+    mkdir "/mnt/${mntname}/dvr/raw"
+    mkdir "/mnt/${mntname}/dvr/test"
+else
+    echo "Fileshare folders appear to be setup; skipping..."
+fi
+
+if [ ! -L "${here}/raw" ]
+then
+    ln -s "/mnt/${mntname}/dvr/raw" "${here}/raw"
 fi
 
 if [ ! -L "/var/www/html/dvr" ]
 then
-    ln -s /home/pi/dvr/www /var/www/html/dvr
+    ln -s ${here}/www /var/www/html/dvr
+else
+    echo "DVR webserver directory setup; skipping..."
 fi
 
 if [ ! -f "/var/www/html/dvr/index.php" ]
 then
     echo "<?php phpinfo(); ?>" > /var/www/html/dvr/index.php
+else
+    echo "DVR webpage setup; skipping..."
 fi
 
+has_rc_local=0
+if [ -f "/etc/rc.local" ]
+then
+    has_rc_local=$(grep -c "dvr/bin/startup" /etc/rc.local)
+fi
+
+if [ "0" == "${has_rc_local}" ]
+then
+    cp ${here}/etc/rc.local /etc/rc.local
+    chmod a+x /etc/rc.local
+    chown root:root /etc/rc.local
+else
+    echo "recorder daemon setup; skipping..."
+fi
+
+if [ ! -f "/home/pi/logs" ]
+then
+    mkdir /home/pi/logs
+fi
+
+echo "All Done!"
+echo "Clients can access DVR via http://mediaserver/dvr/index.php"
+echo ""

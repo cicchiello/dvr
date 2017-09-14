@@ -9,7 +9,7 @@ import subprocess
 import psutil
 import time
 import datetime
-
+import sys
 
 SemaphoreDirtyFile = '/tmp/dbtouched'
 
@@ -176,19 +176,19 @@ def handleMissedSchedules(rs, now):
 def testInvoke(n):
     return subprocess.Popen(["/usr/bin/python", "recording-proxy.py"], shell=True)
     
-def devInvoke(n):
+def devInvoke(n, fs):
     id = n['_id']
     url = n['url']
-    cmdArr = ['/usr/bin/curl','-X','GET',url,'-i','-o','/mnt/mybook/dvr/'+id+'.mp4'];
+    cmdArr = ['/usr/bin/curl','-X','GET',url,'-i','-o',fs+'/raw'+id+'.mp4'];
     print nowstr(),"INFO: cmd: ",cmdArr
     return subprocess.Popen(cmdArr, shell=False)
 
 def prodInvoke(n):
     print "Hi"
     
-def startCapture(n, now):
+def startCapture(n, now, fs):
     global activeCaptureCnt
-    proc = devInvoke(n) if (mode == "dev") else prodInvoke(n)
+    proc = devInvoke(n, fs) if (mode == "dev") else prodInvoke(n)
     print nowstr(),"INFO: returned from invoke"
     activeCaptureCnt += 1
     n['type'] = 'capturing'
@@ -219,23 +219,23 @@ def stopCapture(s, now):
     #print r.json()
 
     
-def handleLateStarts(rs, now):
+def handleLateStarts(rs, now, fs):
     #print json.dumps(rs,indent=3)
     late = selectNextMissedStart(rs, now)
     while (late != None):
         print nowstr(),"INFO: Found at least one schedule that should have started already!  Starting now." #, json.dumps(late,indent=3)
-        startCapture(late, now)
+        startCapture(late, now, fs)
         rs = fetchScheduledResultSet()
         late = selectNextMissedStart(rs, now)
     return rs
 
 
-def handleNextStart(rs, now):
+def handleNextStart(rs, now, fs):
     #print json.dumps(rs,indent=3)
     n = selectNextStart(rs, now)
     while (n != None):
         print nowstr(),"INFO: Found a schedule that starts within a minute; starting it now"
-        startCapture(n, now)
+        startCapture(n, now, fs)
         rs = fetchScheduledResultSet()
         n = selectNextStart(rs, now)
     return rs
@@ -254,6 +254,19 @@ def handleNextStop(crs, now):
     return crs
 
 
+def usage():
+    print "ERROR: missing argument <dvr-filesystem>"
+    print ""
+    print "Usage:",sys.argv[0]," <dvr-filesystem>"
+    print ""
+    exit()
+
+
+if (len(sys.argv) < 2):
+    usage()
+
+dvr_fs = sys.argv[1]
+print nowstr(), "Using dvr-filesystem set to:", dvr_fs
             
 srs = getScheduleResultSet(None)
 crs = getCapturingResultSet([])
@@ -267,11 +280,11 @@ while (True):
     print ""
 
     print nowstr(),"looking for late..."
-    srs = handleLateStarts(srs, now)
+    srs = handleLateStarts(srs, now, dvr_fs)
     print ""
     
     print nowstr(),"looking for ones that should start now..."
-    srs = handleNextStart(srs, now)
+    srs = handleNextStart(srs, now, dvr_fs)
     print ""
 
     print nowstr(),"looking for ones that should stop now..."

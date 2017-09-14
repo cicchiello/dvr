@@ -6,5 +6,5 @@ sleep 10
 
 echo `whoami`
 echo "before invoking" >> /home/pi/logs/dvr-startup.log
-python -u /home/pi/dvr/py/recorder.py >> /home/pi/logs/dvr-recorder.log
+python -u /home/pi/dvr/py/recorder.py /home/pi/dvr/raw >> /home/pi/logs/dvr-recorder.log
 echo "recorder.py shutdown" >> /home/pi/logs/dvr-startup.log
