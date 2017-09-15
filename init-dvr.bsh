@@ -25,9 +25,8 @@ fi
 echo "Seems you're allowed in!"
 echo ""
 
-pushd $(dirname ${0})
+pushd /home/pi/dvr
 here=$(pwd)
-popd
 echo "work dir: "${here}
 
 # accept either /mnt/<mount-name> or <mount-name>
@@ -115,6 +114,9 @@ then
     chown pi:pi ${inifile}
 fi
 
+popd
+
 echo "All Done!"
 echo "Clients can access DVR via http://mediaserver/dvr/index.php"
 echo ""
+

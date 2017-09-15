@@ -10,22 +10,66 @@ fi
 echo "Seems you're allowed in!"
 echo ""
 
-cd ~
-apt-get install build-essential dh-make fakeroot yasm pkg-config libx264-dev
-git clone https://github.com/mstorsjo/fdk-aac.git
-cd fdk-acc
-./autogen.sh
-./configure --enable-shared --enable-static
-make
-make install
-ldconfig
+pushd /home/pi/dvr
+here=$(pwd)
+echo "work dir: "${here}
+
+if [ ! -d "${here}/fdk-aac" ]
+then
+    apt-get -y install build-essential dh-make fakeroot yasm pkg-config libx264-dev
+    git clone https://github.com/mstorsjo/fdk-aac.git
+    cd fdk-aac
+    ./autogen.sh
+    ./configure --enable-shared --enable-static
+    make
+    sudo make install
+    sudo ldconfig
+    cd "${here}"
+fi
 
 
-https://sebastian.korotkiewicz.eu/2016/09/30/ffmpeg-on-raspbian-raspberry-pi/
+if [ ! -d "${here}/x264" ]
+then
+    git clone --depth 1 git://git.vedeolan.org/x264
+    cd x264
+    ./configure --host=arm-unknown-linux-gnueabi --enable-static --disable-opencl
+    make -j 4
+    make install
+    cd "${here}"
+fi
 
-time ffmpeg -i /mnt/mybook/dvr/raw/raw7ed4da00e8e1f550cf3c5743c4028f0b.mp4 -codec:v mpeg2video -qscale:v 2 -c:v libx264 -preset slow -crf 20 /mnt/mybook/dvr/raw/raw7ed4da00e8e1f550cf3c5743c4028f0b.mpg
+if [ ! -d "${here}/lame" ]
+then
+    mkdir lame
+    cd lame
+    wget http://downloads.sourceforge.net/project/lame/lame/3.99/lame-3.99.tar.gz
+    tar xzvf lame-3.99.tar.gz
+    cd lame-3.99
+    ./configure
+    make
+    make install
+    cd "${here}"
+fi
 
-time ffmpeg -i /mnt/mybook/dvr/raw/italian_job.mp4 -codec:v mpeg2video -qscale:v 2 -c:v libx264 -preset slow -crf 20 /mnt/mybook/dvr/raw/italian_job_test1.mpg
+if [ ! -d "${here}/ffmpeg" ]
+then
+    git clone --depth=1 git://source.ffmpeg.org/ffmpeg.git
+    cd ffmpeg
+    ./configure --arch=armel --target-os=linux --enable-gpl --enable-libx264 --enable-libmp3lame --enable-nonfree --enable-omx --enable-omx-rpi
+    make -j 4
+    make install
+    ldconfig
+    cd "${here}"
+fi
+
+#https://sebastian.korotkiewicz.eu/2016/09/30/ffmpeg-on-raspbian-raspberry-pi/
+
+#time ffmpeg -i /mnt/mybook/dvr/raw/raw7ed4da00e8e1f550cf3c5743c4028f0b.mp4 -codec:v mpeg2video -qscale:v 2 -c:v libx264 -preset slow -crf 20 /mnt/mybook/dvr/raw/raw7ed4da00e8e1f550cf3c5743c4028f0b.mpg
+
+#time ffmpeg -i /mnt/mybook/dvr/raw/italian_job.mp4 -codec:v mpeg2video -qscale:v 2 -c:v libx264 -preset slow -crf 20 /mnt/mybook/dvr/raw/italian_job_test1.mpg
 # consider adding "-vf yadif=1" or "-vf yadif=0"
 # consider removing "-qscale:v 2"
 # confirm that "-codec:*" is same as "-c:*"
+
+
+popd
