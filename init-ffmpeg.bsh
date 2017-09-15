@@ -24,3 +24,8 @@ ldconfig
 https://sebastian.korotkiewicz.eu/2016/09/30/ffmpeg-on-raspbian-raspberry-pi/
 
 time ffmpeg -i /mnt/mybook/dvr/raw/raw7ed4da00e8e1f550cf3c5743c4028f0b.mp4 -codec:v mpeg2video -qscale:v 2 -c:v libx264 -preset slow -crf 20 /mnt/mybook/dvr/raw/raw7ed4da00e8e1f550cf3c5743c4028f0b.mpg
+
+time ffmpeg -i /mnt/mybook/dvr/raw/italian_job.mp4 -codec:v mpeg2video -qscale:v 2 -c:v libx264 -preset slow -crf 20 /mnt/mybook/dvr/raw/italian_job_test1.mpg
+# consider adding "-vf yadif=1" or "-vf yadif=0"
+# consider removing "-qscale:v 2"
+# confirm that "-codec:*" is same as "-c:*"
