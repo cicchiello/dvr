@@ -63,16 +63,9 @@
   </head>
   
 	  <?php
-             $mode = "dev";
-	     $ProdDbBase = 'https://jfcenterprises.cloudant.com';
-	     $DevDbBase = 'http://joes-mac-mini:5984';
-	     $Db = 'dvr';
-	     
-	     if ($mode == "dev") {
-	        $DbBase = $DevDbBase;
-	     } else {
-	        $DbBase = $ProdDbBase;
-	     }
+	     $ini = parse_ini_file("./config.ini");
+	     $DbBase = $ini['couchbase'];
+	     $Db = "dvr";
 	     $DbViewBase = $DbBase.'/'.$Db.'/_design/dvr/_view';
 
 	     $url = "http://ipv4-api.hdhomerun.com/discover";

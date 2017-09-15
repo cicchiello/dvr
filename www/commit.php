@@ -45,24 +45,11 @@
   </head>
   
          <?php
-            $mode = "dev";
-	    $ProdDbBase = 'https://jfcenterprises.cloudant.com';
-	    $DevDbBase = 'http://joes-mac-mini:5984';
-	    $Db = 'dvr';
-	    
-	    $key = 'socksookeesayedwerameate';
-	    $pswd = 'c2d5c73bc067e9f73fd568c3ef783232fb2d0498';
-	    $ProdWriteDb = 'https://'.$key.':'.$pswd.'@jfcenterprises.cloudant.com/dvr';
-	    $DevWriteDb = 'http://joes-mac-mini:5984/dvr';
-	    
-	    if ($mode == "dev") {
-	       $DbBase = $DevDbBase;
-	       $WriteDb = $DevWriteDb;
-	    } else {
-	       $DbBase = $ProdDbBase;
-	       $WriteDb = $ProdWriteDb;
-	    }
+	    $ini = parse_ini_file("./config.ini");
+	    $DbBase = $ini['couchbase'];
+	    $Db = "dvr";
 	    $DbViewBase = $DbBase.'/'.$Db.'/_design/dvr/_view';
+	    $WriteDb = $DbBase.'/'.$Db;
 	    
 	    $url = "http://ipv4-api.hdhomerun.com/discover";
 	    $devices = json_decode(file_get_contents($url), true);
