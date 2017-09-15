@@ -5,6 +5,14 @@
 ---
 
 ## Prerequisites:
+   * Set the timezone so that all times used by the DVR are sane
+
+```
+   > cd /home/pi
+   > sudo raspi-config
+       Localization->Timezone Change-><choose yours>
+```
+
    * get the pitools package
 
 ```

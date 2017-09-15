@@ -28,6 +28,8 @@ then
 fi
 
 
+#much of what follows was found here:
+#   https://sebastian.korotkiewicz.eu/2016/09/30/ffmpeg-on-raspbian-raspberry-pi/
 if [ ! -d "${here}/x264" ]
 then
     git clone --depth 1 git://git.vedeolan.org/x264
@@ -62,14 +64,25 @@ then
     cd "${here}"
 fi
 
-#https://sebastian.korotkiewicz.eu/2016/09/30/ffmpeg-on-raspbian-raspberry-pi/
-
-#time ffmpeg -i /mnt/mybook/dvr/raw/raw7ed4da00e8e1f550cf3c5743c4028f0b.mp4 -codec:v mpeg2video -qscale:v 2 -c:v libx264 -preset slow -crf 20 /mnt/mybook/dvr/raw/raw7ed4da00e8e1f550cf3c5743c4028f0b.mpg
+# consider adding "-vf yadif=1" or "-vf yadif=0"
+# consider removing "-q:v 2"
+# consider "-q:v 8"
+# try "-c:v h264_omx" instead of "-c:v libx264" to use the hardware codec
 
 #time ffmpeg -i /mnt/mybook/dvr/raw/italian_job.mp4 -codec:v mpeg2video -qscale:v 2 -c:v libx264 -preset slow -crf 20 /mnt/mybook/dvr/raw/italian_job_test1.mpg
-# consider adding "-vf yadif=1" or "-vf yadif=0"
-# consider removing "-qscale:v 2"
-# confirm that "-codec:*" is same as "-c:*"
+#   - Gave nice results except for noticable interleaving
+#   - took a long time!  Only 0.7 frames per second processed
 
+#time ffmpeg -i /mnt/mybook/dvr/raw/italian_job.mp4 -codec:v mpeg2video -qscale:v 2 -c:v libx264 -preset fast -crf 24 /mnt/mybook/dvr/raw/italian_job_test2.mpg
+#   - Gave nice results except for noticable interleaving
+#   - faster -- around 2.5 frames per second processed
+
+#time ffmpeg -i /mnt/mybook/dvr/raw/italian_job.mp4 -codec:v mpeg2video -vf yadif=1 -qscale:v 2 -c:v libx264 -preset fast -crf 24 /mnt/mybook/dvr/raw/italian_job_test3.mpg
+#   - Nicer results; no interleaving problem
+#   - processing a little faster
+
+#time ffmpeg -i /mnt/mybook/dvr/raw/italian_job.mp4 -codec:v mpeg2video -vf yadif=1 -q:v 8 -c:v libx264 -preset fast -crf 24 /mnt/mybook/dvr/raw/italian_job_test4.mpg
+#   - Nicer results; no interleaving problem
+#   - processing a little faster still
 
 popd
