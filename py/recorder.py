@@ -179,7 +179,7 @@ def testInvoke(n):
 def devInvoke(n, fs):
     id = n['_id']
     url = n['url']
-    cmdArr = ['/usr/bin/curl','-X','GET',url,'-i','-o',fs+'/raw'+id+'.mp4'];
+    cmdArr = ['/usr/bin/curl','-X','GET',url,'-i','-o',fs+'/'+id+'.mp4'];
     print nowstr(),"INFO: cmd: ",cmdArr
     return subprocess.Popen(cmdArr, shell=False)
 
