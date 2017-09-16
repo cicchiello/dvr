@@ -57,7 +57,7 @@ if [ ! -d "${here}/ffmpeg" ]
 then
     git clone --depth=1 git://source.ffmpeg.org/ffmpeg.git
     cd ffmpeg
-    ./configure --arch=armel --target-os=linux --enable-gpl --enable-libx264 --enable-libmp3lame --enable-nonfree --enable-omx --enable-omx-rpi
+    ./configure --arch=armel --target-os=linux --enable-gpl --enable-libx264 --enable-libmp3lame --enable-nonfree --enable-mmal --enable-omx --enable-omx-rpi
     make -j 4
     make install
     ldconfig
@@ -84,5 +84,15 @@ fi
 #time ffmpeg -i /mnt/mybook/dvr/raw/italian_job.mp4 -codec:v mpeg2video -vf yadif=1 -q:v 8 -c:v libx264 -preset fast -crf 24 /mnt/mybook/dvr/raw/italian_job_test4.mpg
 #   - Nicer results; no interleaving problem
 #   - processing a little faster still
+
+#time ffmpeg -y -i /mnt/mybook/dvr/raw/italian_job.mp4 -vf yadif=1 -vf scale=-1:720 -q:v 8 -c:v libx264 /mnt/mybook/dvr/raw/italian_job_test5.mpg
+#   - no interleaving problem
+#   - processed faster, but not twice as fast!?!
+#   - smaller file (about 1/3)
+
+#time ffmpeg -y -i /mnt/mybook/dvr/raw/italian_job.mp4 -vf yadif=1 -vf scale=-1:720 -q:v 8 -c:v h264_omx /mnt/mybook/dvr/raw/italian_job_test6.mpg
+#   - horrible quality
+#   - much faster processing time (80s to process 30s)
+#   - very small file
 
 popd
