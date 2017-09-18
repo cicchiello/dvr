@@ -9,6 +9,9 @@
 	},
 	"capturing": {
 	    "map": "function (doc) {\n  if (doc.type === \"capturing\")\n    emit(doc._id, doc);\n}"
+	},
+	"deleted": {
+	    "map": "function (doc) {\n  if ((typeof doc.type === 'string') && (doc.type.substr(0,7) === 'deleted'))    emit(doc._id, doc);\n}"
 	}
     },
     "language": "javascript"
