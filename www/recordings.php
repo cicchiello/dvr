@@ -60,7 +60,9 @@
 
   </head>
   
-	  <?php
+          <?php
+             include('dvr_utils.php');
+	     
 	     $ini = parse_ini_file("./config.ini");
 	     $DbBase = $ini['couchbase'];
 	     $Db = "dvr";
@@ -117,30 +119,19 @@
 
 	  <?php
 	     $url = $DbViewBase.'/recordings';
-	     $json = json_decode(file_get_contents($url), true);
 
-	     $cnt = 0;
-	     foreach ($json['rows'] as $recording) {
-	        if ($cnt == 0) {
-	           //echo '<ul class="checklist">';
-		   echo '<table style="width:100%">';
-	        }
-	        //echo "<li><b>".$recording['value']['description']."</b> and this isn't bold</li>";
-		echo '<tr>';
-		echo '  <th rowspan="2">'.$recording['value']['description'].'</th>';
-		echo '  <td>55577854</td>';
-		echo '</tr>';
-		echo '<tr>';
-		echo '  <td>55577855</td>';
-		echo '</tr>';
-		$cnt += 1;
-	     }
-	     if ($cnt == 0) {
-	        echo "<p>No Recordings available.</p>";
-	     } else {
-	        //echo "</ul>";
-		echo '</table>';
-	     }
+	     $downloadAction = array(
+	        "onclick" => "downloadAction",
+	        "src" => "img/download.png",
+	        "title" => "Download"
+	     );
+	     $deleteAction = array(
+	        "onclick" => "deleteAction",
+	        "src" => "img/trashcan.png",
+	        "title" => "Delete"
+	     );
+	     echo renderRecordingsTable(json_decode(file_get_contents($url), true)['rows'],
+	                                array($downloadAction, $deleteAction));
 	  ?>
 
 	</div>

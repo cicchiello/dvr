@@ -71,17 +71,21 @@
        location.reload();
     }
     
-    function enableScheduler() {
+    function toggleSchedule() {
        var newSchdArea = document.getElementById("newSchedule");
-       var schdArea = document.getElementById("scheduled");
-       var btn = document.getElementById("plus");
-       var cal = document.getElementById("calendar");
-       var chSelector = document.getElementById("channelSelector");
-       schdArea.className = schdArea.className.replace(" w3-show", " w3-hide");
-       newSchdArea.className = newSchdArea.className.replace(" w3-hide", " w3-show");
-       cal.className = cal.className.replace(" w3-hide", " w3-show");
-       btn.className = btn.className.replace(" w3-show", " w3-hide");
-       chSelector.className = chSelector.className.replace("w3-hide", "w3-show");
+       if (newSchdArea.className.indexOf("w3-show") == -1) {
+          var schdArea = document.getElementById("scheduled");
+          var btn = document.getElementById("plus");
+          var cal = document.getElementById("calendar");
+          var chSelector = document.getElementById("channelSelector");
+          schdArea.className = schdArea.className.replace(" w3-show", " w3-hide");
+          newSchdArea.className = newSchdArea.className.replace(" w3-hide", " w3-show");
+          cal.className = cal.className.replace(" w3-hide", " w3-show");
+          btn.className = btn.className.replace(" w3-show", " w3-hide");
+          chSelector.className = chSelector.className.replace("w3-hide", "w3-show");
+       } else {
+          location.reload();
+       }
     }
     
     function checkForAllInputs() {
@@ -137,8 +141,9 @@
     function deleteAction(id) {
        //console.log("id: "+id);
        var schdArea = document.getElementById("scheduled");
+       var delArea = document.getElementById("deleteConfirm");
        schdArea.className = schdArea.className.replace(" w3-show", " w3-hide");
-       window.location.replace('./schedules_del.php', "", "", true);
+       delArea.className = delArea.className.replace(" w3-hide", " w3-show");
     }
     
   </script>
@@ -228,12 +233,22 @@
 	
       <div class="w3-panel w3-padding-16">
 	<br>
-        <img id="plus" onclick="enableScheduler()" src="img/plus.png"
+        <img id="plus" onclick="toggleSchedule()" src="img/plus.png"
 	     class="menuIcon w3-display-bottommiddle Btn w3-show"
 	     width="64" height="64" title="Schedule A Recording">
       </div>
     </div>
       
+    <div id="deleteConfirm" class="w3-container w3-display-middle w3-hide">
+
+      <div class="w3-panel w3-card w3-white w3-padding-16 w3-round-large">
+	<p>Are you sure?</p>
+	<img id="cancelSchedule" onclick="reload()" src="img/cancel.png"
+	     width="64" height="64" title="Cancel" class="popupBtn">
+      </div>
+      
+    </div>
+    
     <div id="newSchedule"
 	 class="w3-container w3-display-topmiddle w3-panel w3-card w3-white w3-padding-16 w3-round-large w3-hide">
       <form id="newRecording" action="./commit.php" method="GET">
@@ -302,7 +317,7 @@
 	    </tr>
 	  </table>
 	  <br>
-	  <img id="cancelSchedule" onclick="reload()" src="img/cancel.png"
+	  <img id="cancelSchedule" onclick="toggleSchedule()" src="img/cancel.png"
 	       width="64" height="64" title="Cancel" class="popupBtn">
 	  <input id="commitSchedule" type="image" src="img/ok-gray.png" alt="Submit" title="Submit"
 		 align="right" width="64" height="64" class="popupBtn">
