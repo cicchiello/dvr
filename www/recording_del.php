@@ -31,7 +31,12 @@
   <body class="bg" onload="init()">
 
     <?php
-       echo renderMenu();
+       $enabled = array(
+          'live' => false,
+          'recordings' => true,
+          'scheduled' => false
+       );
+       echo renderMenu($enabled);
 
        $id = $_GET['id'];
        

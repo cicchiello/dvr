@@ -24,7 +24,14 @@
   
   <body class="bg">
 
-    <?php echo renderMenu(); ?>
+    <?php
+       $enabled = array(
+          'live' => false,
+          'recordings' => true,
+          'scheduled' => false
+       );
+       echo renderMenu($enabled);
+       ?>
 
     <div id="detail"
 	 class="w3-container w3-display-middle w3-panel w3-card w3-white w3-padding-16 w3-round-large">

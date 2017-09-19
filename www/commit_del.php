@@ -86,7 +86,13 @@
      <?php
         include ('dvr_utils.php');
        
-        echo renderMenu();
+        $enabled = array(
+           'live' => false,
+           'recordings' => false,
+           'scheduled' => true
+        );
+	
+        echo renderMenu($enabled);
 	
 	$id = $_GET["id"];
 	   

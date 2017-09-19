@@ -91,31 +91,9 @@
 	  ?>
   <body class="bg">
 
-    <div id="menuArea">
-      <input onclick="menuAction()" type="image" src="img/showmenu.png"
-	     width="64" height="64" title="Menu" class="Btn">
-      
-      <div id="menuItems" class="w3-hide">
-	<a class="_URL" href="./live.php">
-	  <div class="menuLbl Btn" title="Live TV">
-	    <img id="menu1" src="img/livetv2.png" width="64" height="64" class="Btn">
-	    <p><b><?php echo $numChannels; ?> Channels</b></p>
-	  </div>
-	</a>
-	<a class="_URL" href="./recordings.php">
-	  <div class="menuLbl Btn" title="Recordings">
-	    <img id="menu2" src="img/video.png" width="64" height="64" class="Btn">
-	    <p><b><?php echo $numRecordings; ?> Recordings</b></p>
-	  </div>
-	</a>
-	<a class="_URL" href="./schedules.php">
-	  <div class="menuLbl Btn" title="Schedule">
-	    <img id="menu3" src="img/schd.png" width="64" height="64" class="Btn">
-	    <p><b><?php echo $numScheduled; ?> Scheduled</b></p>
-	  </div>
-	</a>
-      </div>
-    </div>
+    <?php include('dvr_utils.php'); ?>
+    
+    <?php echo renderMainMenu(); ?>
 
     <div class="row">
       

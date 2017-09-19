@@ -28,7 +28,16 @@
 
   <body class="bg" onload="init()">
 
-    <?php echo renderMenu(); ?>
+    <?php
+       $enabled = array(
+          'live' => false,
+          'recordings' => true,
+          'scheduled' => false
+       );
+   
+       echo renderMenu($enabled);
+    
+       ?>
     
     <div style="height:90%; width:50%; padding:20px; float:right"
 	 class="w3-white w3-round-large w3-panel">
