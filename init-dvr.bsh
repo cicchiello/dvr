@@ -62,7 +62,8 @@ if [ ! -d "/mnt/${mntname}/dvr" ]
 then
     mkdir "/mnt/${mntname}/dvr"
     mkdir "/mnt/${mntname}/dvr/raw"
-    mkdir "/mnt/${mntname}/dvr/test"
+    mkdir "/mnt/${mntname}/dvr/library"
+    mkdir "/mnt/${mntname}/dvr/trashcan"
 else
     echo "Fileshare folders appear to be setup; skipping..."
 fi
@@ -70,6 +71,10 @@ fi
 if [ ! -L "${here}/raw" ]
 then
     ln -s "/mnt/${mntname}/dvr/raw" "${here}/raw"
+    ln -s "/mnt/${mntname}/dvr/library" "${here}/library"
+    ln -s "/mnt/${mntname}/dvr/raw" "${here}/www/raw"
+    ln -s "/mnt/${mntname}/dvr/library" "${here}/www/library"
+    ln -s "/mnt/${mntname}/dvr/trashcan" "${here}/www/trashcan"
 fi
 
 if [ ! -L "/var/www/html/dvr" ]

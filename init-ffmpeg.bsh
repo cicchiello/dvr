@@ -95,4 +95,11 @@ fi
 #   - much faster processing time (80s to process 30s)
 #   - very small file
 
+#time ffmpeg -loglevel quiet -y -i /mnt/mybook/dvr/deleteMeSoon/7ed4da00e8e1f550cf3c5743c4028394.mp4 -vf yadif=1 -vf scale=-1:720 -c:v libx264 /mnt/mybook/dvr/raw/Orville_s1e2.mpg
+#   - no interleaving problem
+#   - processed faster, but not twice as fast!?!  Still pretty slow
+#   - smaller file (about 1/3)
+#   - note output file extension appears to really matter!  Use mpg -- then you can change it
+#     to mp4 later.  Without doing that, no audio ends up in the stream.
+
 popd

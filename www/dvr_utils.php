@@ -17,6 +17,83 @@ function deltaTimeStr($deltaTime)
 }
 
 
+function realFileSize($path)
+{
+    $fp = fopen($path,"r");
+    $pos = 0;
+    $size = 1073741824;
+    fseek($fp, 0, SEEK_SET);
+    while ($size > 1) {
+        fseek($fp, $size, SEEK_CUR);
+
+        if (fgetc($fp) === false) {
+            fseek($fp, -$size, SEEK_CUR);
+            $size = (int)($size / 2);
+        } else {
+            fseek($fp, -1, SEEK_CUR);
+            $pos += $size;
+        }
+    }
+
+    while (fgetc($fp) !== false)  $pos++;
+
+    return $pos;
+}
+
+
+/**
+* Converts bytes into human readable file size.
+*
+* @param string $bytes
+* @return string human readable file size (2,87 Мб)
+* @author Mogilev Arseny
+*/
+function readableSize($bytes)
+{
+    $bytes = floatval($bytes);
+    $arBytes = array(
+        0 => array(
+	    "UNIT" => "TB",
+	    "VALUE" => pow(1024, 4)
+	),
+	1 => array(
+	    "UNIT" => "GB",
+	    "VALUE" => pow(1024, 3)
+	),
+	2 => array(
+	    "UNIT" => "MB",
+	    "VALUE" => pow(1024, 2)
+	),
+	3 => array(
+	    "UNIT" => "KB",
+	    "VALUE" => 1024
+	),
+	4 => array(
+	    "UNIT" => "B",
+	    "VALUE" => 1
+	),
+    );
+
+    foreach($arBytes as $arItem) {
+        if($bytes >= $arItem["VALUE"]) {
+	    $result = strval(round($bytes / $arItem["VALUE"], 2))." ".$arItem["UNIT"];
+	    break;
+	}
+    }
+    return $result;
+}
+
+
+function renderLookAndFeel()
+{
+   $result = '';
+   $result .= '<link rel="shortcut icon" type="image/x-icon" href="./img/dvr-favicon.ico" />';
+   $result .= '<link href="./w3.css" media="all" rel="stylesheet">';
+   $result .= '<link href="./style.css" media="all" rel="stylesheet">';
+   $result .= '<link href="./menu2.css" media="all" rel="stylesheet">';
+   return $result;
+}
+
 function renderMenu()
 {
    $ini = parse_ini_file("./config.ini");
@@ -94,7 +171,7 @@ function renderRecordingsTable($items, $actions)
 
       $q = "'";
       foreach ($actions as $action) {
-         $result .= '              <img onclick="'.$action['onclick'].'('.$q.$id.$q.')"';
+	 $result .= '              <img onclick="'.$action['onclick'].'('.$q.$id.$q.')"';
          $result .= '                     src="'.$action['src'].'" class="Btn"';
          $result .= '                     width="32" height="32" title="'.$action['title'].'">';
       }
@@ -135,7 +212,11 @@ function renderEntryInfo($id)
    $recordStart = $detail['record-start'];
    $recordEnd = $detail['record-end'];
    $date = date("D M j, 'y",$recordStart);
-   $startTime = date("h:i a",$recordStart);
+   $startTimeStr = date("h:i a",$recordStart);
+   $actualStart = $detail['capture-start-timestamp'];
+   $actualStartStr = date("h:i a",$actualStart);
+   $actualEnd = $detail['capture-stop-timestamp'];
+   $file = $detail['file'];
 
    $url = "http://ipv4-api.hdhomerun.com/discover";
    $devices = json_decode(file_get_contents($url), true);
@@ -154,52 +235,94 @@ function renderEntryInfo($id)
       if ($num == $channel) $channelName = $name;
    }
 
+   $showDbId = false;
+   
    $result = '';
-   $result .= '<fieldset>';
-   $result .= '	  <legend>Recording Detail:</legend>';
-   $result .= '	  <table>';
-   $result .= '	    <tr>';
-   $result .= '	      <td>Channel:</td>';
-   $result .= '	      <td>';
-   $result .= '	         <b style="color:blue" class="w3-right">'.$channel;
-   $result .= '		 </b>';
-   $result .= '	      </td>';
-   $result .= '	      <td>';
-   $result .= '	         <b style="color:blue" class="w3-right">'.$channelName;
-   $result .= '		 </b>';
-   $result .= '	      </td>';
-   $result .= '	    </tr>';
-   $result .= '	    <tr>';
-   $result .= '	      <td>Description:</td>';
-   $result .= '	      <td colspan="2">';
-   $result .= '	         <b style="color:blue" class="w3-right">'.$description;
-   $result .= '		 </b>';
-   $result .= '	      </td>';
-   $result .= '	    </tr>';
-   $result .= '	    <tr>';
-   $result .= '	      <td>Date:</td>';
-   $result .= '	      <td colspan="2">';
-   $result .= '	         <b style="color:blue" class="w3-right">'.$date;
-   $result .= '		 </b>';
-   $result .= '	      </td>';
-   $result .= '	    </tr>';
-   $result .= '	    <tr>';
-   $result .= '	      <td>Start Time:</td>';
-   $result .= '	      <td colspan="2">';
-   $result .= '	         <b style="color:blue" class="w3-right">'.$startTime;
-   $result .= '		 </b>';
-   $result .= '	      </td>';
-   $result .= '	    </tr>';
-   $result .= '	    <tr>';
-   $result .= '	      <td>Duration:</td>';
-   $result .= '	      <td colspan="2">';
-   $result .= '	         <b style="color:blue" class="w3-right">';
-   $result .= deltaTimeStr($recordEnd-$recordStart);
-   $result .= '		 </b>';
-   $result .= '	      </td>';
-   $result .= '	    </tr>';
-   $result .= '	  </table>';
-   $result .= '	</fieldset>';
+   $result .= '<table>';
+   $result .= '  <tr>';
+   $result .= '    <td>Channel:</td>';
+   $result .= '    <td>';
+   $result .= '       <b style="color:blue" class="w3-right">'.$channel.'</b>';
+   $result .= '    </td>';
+   $result .= '    <td>';
+   $result .= '       <b style="color:blue" class="w3-right">'.$channelName.'</b>';
+   $result .= '	   </td>';
+   $result .= '	 </tr>';
+   $result .= '	 <tr>';
+   $result .= '	   <td>Description:</td>';
+   $result .= '	   <td colspan="2">';
+   $result .= '	      <b style="color:blue" class="w3-right">'.$description.'</b>';
+   $result .= '	   </td>';
+   $result .= '	 </tr>';
+   $result .= '	 <tr>';
+   $result .= '	   <td>Date:</td>';
+   $result .= '	   <td colspan="2">';
+   $result .= '	      <b style="color:blue" class="w3-right">'.$date.'</b>';
+   $result .= '	   </td>';
+   $result .= '	 </tr>';
+
+   $startDiscrepancy = abs($recordStart - $actualStart) > 60;
+   $result .= '	 <tr>';
+   $result .= '	   <td>'.($startDiscrepancy ? 'Scheduled Start':'Start Time').':</td>';
+   $result .= '	   <td colspan="2">';
+   $result .= '	      <b style="color:blue" class="w3-right">'.$startTimeStr.'</b>';
+   $result .= '	   </td>';
+   $result .= '	 </tr>';
+   if ($startDiscrepancy) {
+      $result .= '	 <tr>';
+      $result .= '	   <td>Actual Start:</td>';
+      $result .= '	   <td colspan="2">';
+      $result .= '	      <b style="color:red" class="w3-right">'.$actualStartStr.'</b>';
+      $result .= '	   </td>';
+      $result .= '	 </tr>';
+      $showDbId = true;
+   }
+
+   $scheduledDuration = deltaTimeStr($recordEnd-$recordStart);
+   $actualDuration = deltaTimeStr($actualEnd-$actualStart);
+   $durationDiscrepancy = $scheduledDuration != $actualDuration;
+   $result .= '	 <tr>';
+   $result .= '	   <td>'.($durationDiscrepancy ? 'Scheduled Duration':'Duration').':</td>';
+   $result .= '	   <td colspan="2">';
+   $result .= '	      <b style="color:blue" class="w3-right">'.$scheduledDuration.'</b>';
+   $result .= '	   </td>';
+   $result .= '	 </tr>';
+   if ($durationDiscrepancy) {
+      $result .= '	 <tr>';
+      $result .= '	   <td>Actual Duration:</td>';
+      $result .= '	   <td colspan="2">';
+      $result .= '	      <b style="color:red" class="w3-right">'.$actualDuration.'</b>';
+      $result .= '	   </td>';
+      $result .= '	 </tr>';
+      $showDbId = true;
+   }
+
+   $fileExists = file_exists($file);
+   $result .= '	 <tr>';
+   if ($fileExists) {
+      $result .= '	   <td>File size:</td>';
+      $result .= '	   <td colspan="2">';
+      $result .= '<b style="color:blue" class="w3-right">'.readableSize(realFileSize($file));
+   } else {
+      $result .= '	   <td>File not found:</td>';
+      $result .= '	   <td colspan="2">';
+      $result .= '<b style="color:red; font-size:80%;" class="w3-right">'.$file;
+      $showDbId = true;
+   }
+   $result .= '       </b>';
+   $result .= '	   </td>';
+   $result .= '	 </tr>';
+
+   $showDbId = true;
+   if ($showDbId) {
+      $result .= '  <tr>';
+      $result .= '    <td>Db Id:</td>';
+      $result .= '    <td colspan="2">';
+      $result .= '       <p style="color:blue; font-size:80%" class="w3-right">'.$id.'</p>';
+      $result .= '    </td>';
+      $result .= '  </tr>';
+      $result .= '</table>';
+   }
    
    return $result;
 }

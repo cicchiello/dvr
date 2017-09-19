@@ -35,3 +35,8 @@
         transform: translate(-50%, -50%);
      }
      
+     .popupBtn:hover {
+        outline: none; /* Remove outline */
+        cursor: pointer; /* Add a mouse pointer on hover */
+     }
+

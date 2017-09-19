@@ -71,7 +71,7 @@
 	   console.log("id: "+id);
            var f = parent.document.getElementById("recordingsFrame");
            if (f) 
-              f.callback('./recording_download.php?'+id);
+              f.callback('./recording_download.php?id='+id);
            else
               document.getElementById("result").innerHTML = "no recordingsFrame to pass "+id+" to";
 	}
