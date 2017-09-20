@@ -53,6 +53,7 @@ fi
 if [ ! -f "${here}/.psutil-installed" ]
 then
     pip install psutil
+    pip install configparser
     touch "${here}/.psutil-installed"
 else
     echo "Python psutil appears to be installed; skipping..."
@@ -70,8 +71,8 @@ fi
 
 if [ ! -L "${here}/raw" ]
 then
-    ln -s "/mnt/${mntname}/dvr/raw" "${here}/raw"
-    ln -s "/mnt/${mntname}/dvr/library" "${here}/library"
+    ln -s "/mnt/${mntname}/dvr/raw" "${here}/pi/raw"
+    ln -s "/mnt/${mntname}/dvr/library" "${here}/pi/library"
     ln -s "/mnt/${mntname}/dvr/raw" "${here}/www/raw"
     ln -s "/mnt/${mntname}/dvr/library" "${here}/www/library"
     ln -s "/mnt/${mntname}/dvr/trashcan" "${here}/www/trashcan"
