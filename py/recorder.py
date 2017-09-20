@@ -99,7 +99,7 @@ def selectNextMissedEnd(resultSet,now):
         etime = int(r['record-end'])
         if (etime < now and stime < earliest):
             mini = i
-            ealiest = stime
+            earliest = stime
     return None if mini == -1 else resultSet['rows'][mini]['value']
 
     
@@ -116,7 +116,7 @@ def selectNextMissedStart(resultSet,now):
         etime = int(r['record-end'])
         if (stime < now and now < etime and stime < earliest):
             mini = i
-            ealiest = stime
+            earliest = stime
     return None if mini == -1 else resultSet['rows'][mini]['value']
 
     
@@ -132,7 +132,7 @@ def selectNextStart(resultSet,now):
         stime = r['record-start']
         if ((stime > now) and (stime < now + 60) and (stime < earliest)):
             mini = i
-            ealiest = stime
+            earliest = stime
     return None if mini == -1 else resultSet['rows'][mini]['value']
 
 
@@ -148,7 +148,7 @@ def selectNextStop(resultSet,now):
         stime = r['record-end']
         if ((stime > now) and (stime < now + 60) and (stime < earliest)):
             mini = i
-            ealiest = stime
+            earliest = stime
     return None if mini == -1 else resultSet['rows'][mini]['value']
 
 
