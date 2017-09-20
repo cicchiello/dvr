@@ -10,26 +10,63 @@ import psutil
 import time
 import datetime
 import sys
+import configparser
 
-SemaphoreDirtyFile = '/tmp/dbtouched'
 
-ProdDbKey = 'socksookeesayedwerameate'
-ProdDbPswd = 'c2d5c73bc067e9f73fd568c3ef783232fb2d0498'
+def usage():
+    print "Usage:",sys.argv[0]," -ini <ini-file> [-mode {prod|dev}]"
+    print ""
+    exit()
 
-ProdDbBase = 'https://jfcenterprises.cloudant.com'
-DevDbBase = 'http://joes-mac-mini:5984'
+def nowstr():
+    fmt = 'INFO: %Y-%b-%d %H:%M:%S:'
+    return datetime.datetime.today().strftime('INFO: %Y-%b-%d %H:%M:%S :')
 
-ProdDb = 'dvr'
-DevDb = 'dvr'
+if ((len(sys.argv) < 3) or \
+    ((len(sys.argv) > 3) and (len(sys.argv) < 5))):
+    print "ERROR: wrong number of arguments; expected 2 or 4"
+    usage()
 
-ProdDbWriteAuth = (ProdDbKey,ProdDbPswd)
-DevDbWriteAuth = None
+if (sys.argv[1] != "-ini"):
+    print "ERROR: expected '-ini' for 2nd argument"
+    usage()
 
-mode = "dev"
+if ((len(sys.argv) > 3) and (sys.argv[3] != "-mode")):
+    print "ERROR: expected '-mode' for 4th argument"
+    usage()
 
-DbBase = ProdDbBase if (mode == "prod") else DevDbBase
-Db = ProdDb if (mode == "prod") else DevDb
-DbWriteAuth = ProdDbWriteAuth if (mode == "prod") else DevDbWriteAuth
+dvr_fs = os.path.dirname(sys.argv[0])
+iniFilename = sys.argv[2]
+mode = "prod" if (len(sys.argv) < 4) else sys.argv[4]
+config = configparser.ConfigParser()
+
+if (not os.path.isfile(iniFilename)):
+    print "ERROR:",iniFilename,"file doesn't exist"
+    usage()
+    
+config.read(iniFilename)
+
+if (not os.path.isdir(dvr_fs+"/raw")):
+    print "ERROR: recording location doesn't exists: ",(dvr_fs+"/raw")
+    usage()
+
+if (not (mode in config)):
+    print "ERROR: invalid config file; expected",mode,"section"
+    usage()
+    
+DbBase = config[mode]['DbBase']
+DbKey = config[mode]['DbKey']
+DbPswd = config[mode]['DbPswd']
+Db = config[mode]['Db']
+DbWriteAuth = None if (not (DbKey and DbPswd)) else (DbKey,DbPswd)
+    
+print nowstr(), "Mode:", mode
+print nowstr(), "Using dvr-filesystem root:", dvr_fs
+print nowstr(), "DbBase:", DbBase
+print nowstr(), "DbKey:", DbKey
+print nowstr(), "DbPswd:", DbPswd
+print nowstr(), "Db:", Db
+print nowstr(), "DbWriteAuth:", DbWriteAuth
 
 ALL_OBJS_URL = DbBase+'/'+Db+'/_all_docs'
 BULK_DOCS_URL = DbBase+'/'+Db+'/_bulk_docs'
@@ -41,15 +78,11 @@ CAPTURING_URL = VIEW_BASE+'capturing'
 
 activeCaptureCnt = 0
 
-def nowstr():
-    fmt = 'INFO: %Y-%b-%d %H:%M:%S :'
-    return datetime.datetime.today().strftime('INFO: %Y-%b-%d %H:%M:%S :')
-
-def fetchScheduledResultSet():
+def fetchScheduledSet():
     return json.loads(requests.get(SCHEDULE_URL).text)
 
     
-def fetchCapturingResultSet():
+def fetchCapturingSet():
     return json.loads(requests.get(CAPTURING_URL).text)
 
     
@@ -119,36 +152,32 @@ def selectNextStop(resultSet,now):
     return None if mini == -1 else resultSet['rows'][mini]['value']
 
 
-scheduleSemaphoreCnt = 0
-def getScheduleResultSet(prev):
-    global scheduleSemaphoreCnt
+scheduledSetRefreshCnt = 0
+def getScheduledSet(prev):
+    global scheduledSetRefreshCnt
     resetIt = prev == None
     if (not resetIt):
-        scheduleSemaphoreCnt += 1
-        resetIt = (scheduleSemaphoreCnt > 15)
-        if (not resetIt):
-            resetIt = os.path.isfile(SemaphoreDirtyFile)
+        scheduledSetRefreshCnt += 1
+        resetIt = (scheduledSetRefreshCnt > 15)
     if (resetIt):
-        scheduleSemaphoreCnt = 0
-        if (os.path.isfile(SemaphoreDirtyFile)):
-            os.remove(SemaphoreDirtyFile)
-        return fetchScheduledResultSet()
+        scheduledSetRefreshCnt = 0
+        return fetchScheduledSet()
     else:
         return prev
 
 
-captureSemaphoreCnt = 0
-def getCapturingResultSet(prev):
-    global captureSemaphoreCnt
+capturingSetRefreshCnt = 0
+def getCapturingSet(prev):
+    global capturingSetRefreshCnt
     global activeCaptureCnt
     if (activeCaptureCnt):
         resetIt = len(prev) == 0
         if (not resetIt):
-            captureSemaphoreCnt += 1
-            resetIt = captureSemaphoreCnt > 5
+            capturingSetRefreshCnt += 1
+            resetIt = capturingSetRefreshCnt > 5
         if (resetIt):
-            captureSemaphoreCnt = 0
-            return fetchCapturingResultSet()
+            capturingSetRefreshCnt = 0
+            return fetchCapturingSet()
         else:
             return prev
     else:
@@ -168,33 +197,28 @@ def handleMissedSchedules(rs, now):
         url = POST_URL+'/'+id
         r = requests.put(url, auth=DbWriteAuth, json=missedCompletely)
         #print r.json()
-        rs = fetchScheduledResultSet()
+        rs = fetchScheduledSet()
         missedCompletely = selectNextMissedEnd(rs,now)
     return rs
 
 
-def testInvoke(n):
-    return subprocess.Popen(["/usr/bin/python", "recording-proxy.py"], shell=True)
-    
-def devInvoke(n, fs):
+def invoke(n, fs):
     id = n['_id']
     url = n['url']
-    cmdArr = ['/usr/bin/curl','-X','GET',url,'-i','-o',fs+'/'+id+'.mp4'];
+    cmdArr = ['/usr/bin/curl','-X','GET',url,'-i','-o',fs+'/raw/'+id+'.mp4'];
     print nowstr(),"INFO: cmd: ",cmdArr
     return subprocess.Popen(cmdArr, shell=False)
 
-def prodInvoke(n):
-    print "Hi"
-    
 def startCapture(n, now, fs):
     global activeCaptureCnt
-    proc = devInvoke(n, fs) if (mode == "dev") else prodInvoke(n)
+    proc = invoke(n, fs)
     print nowstr(),"INFO: returned from invoke"
     activeCaptureCnt += 1
+    id = n['_id']
     n['type'] = 'capturing'
     n['capture-start-timestamp'] = str(now)
     n['pid'] = str(proc.pid)
-    id = n['_id']
+    n['file'] = 'raw/'+id
     del n['_id']
     print nowstr(),"Here's the update I'm going to make:", json.dumps(n,indent=3)
     url = POST_URL+'/'+id
@@ -225,7 +249,7 @@ def handleLateStarts(rs, now, fs):
     while (late != None):
         print nowstr(),"INFO: Found at least one schedule that should have started already!  Starting now." #, json.dumps(late,indent=3)
         startCapture(late, now, fs)
-        rs = fetchScheduledResultSet()
+        rs = fetchScheduledSet()
         late = selectNextMissedStart(rs, now)
     return rs
 
@@ -236,7 +260,7 @@ def handleNextStart(rs, now, fs):
     while (n != None):
         print nowstr(),"INFO: Found a schedule that starts within a minute; starting it now"
         startCapture(n, now, fs)
-        rs = fetchScheduledResultSet()
+        rs = fetchScheduledSet()
         n = selectNextStart(rs, now)
     return rs
 
@@ -248,28 +272,14 @@ def handleNextStop(crs, now):
     while (s != None):
         print nowstr(),"INFO: Found an active capture that should be stopped:", json.dumps(s,indent=3)
         stopCapture(s, now)
-        crs = fetchCapturingResultSet()
+        crs = fetchCapturingSet()
         s = selectNextStop(crs, now)
     #print "trace 3"
     return crs
 
 
-def usage():
-    print "ERROR: missing argument <dvr-filesystem>"
-    print ""
-    print "Usage:",sys.argv[0]," <dvr-filesystem>"
-    print ""
-    exit()
-
-
-if (len(sys.argv) < 2):
-    usage()
-
-dvr_fs = sys.argv[1]
-print nowstr(), "Using dvr-filesystem set to:", dvr_fs
-            
-srs = getScheduleResultSet(None)
-crs = getCapturingResultSet([])
+srs = getScheduledSet(None)
+crs = getCapturingSet([])
 while (True):
     now = calendar.timegm(time.gmtime())
     print nowstr(), "now:", now
@@ -292,7 +302,7 @@ while (True):
     print ""
 
     time.sleep(50)
-    srs = getScheduleResultSet(srs)
-    crs = getCapturingResultSet(crs)
+    srs = getScheduledSet(srs)
+    crs = getCapturingSet(crs)
     #print "srs: ", srs
     #print "crs: ", crs
