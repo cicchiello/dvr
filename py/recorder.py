@@ -233,9 +233,10 @@ def stopCapture(s, now):
         proc.kill()
     process.kill()
     activeCaptureCnt -= 1
+    id = s['_id']
     s['type'] = 'recording'
     s['capture-stop-timestamp'] = str(now)
-    id = s['_id']
+    del s['pid']
     del s['_id']
     print nowstr(),"Here's the update I'm going to make:", json.dumps(s,indent=3)
     url = POST_URL+'/'+id
@@ -247,7 +248,7 @@ def handleLateStarts(rs, now, fs):
     #print json.dumps(rs,indent=3)
     late = selectNextMissedStart(rs, now)
     while (late != None):
-        print nowstr(),"INFO: Found at least one schedule that should have started already!  Starting now." #, json.dumps(late,indent=3)
+        print nowstr(),"INFO: Found at least one schedule that should have started already!  Starting now."
         startCapture(late, now, fs)
         rs = fetchScheduledSet()
         late = selectNextMissedStart(rs, now)

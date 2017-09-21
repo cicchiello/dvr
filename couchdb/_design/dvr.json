@@ -2,16 +2,28 @@
     "_id": "_design/dvr",
     "views": {
 	"recordings": {
-	    "map": "function (doc) {\n  if (doc.type === \"recording\")\n    emit(doc._id, doc);\n}"
+	    "map": "function (doc) {\n  if (doc.type && doc.type === 'recording')\n    emit(doc._id, doc);\n}"
+	},
+	"uncompressed-recordings": {
+	    "map": "function (doc) {\n  if (doc.type && doc.type === 'recording' && !doc['is-compressed'] && !doc['compressing'])\n    emit(doc._id, doc);\n}"
+	},
+	"compressing-recordings": {
+	    "map": "function (doc) {\n  if (doc.type && doc.type === 'recording' && !doc['is-compressed'] && doc['compressing'])\n    emit(doc._id, doc);\n}"
+	},
+	"compressed-recordings": {
+	    "map": "function (doc) {\n  if (doc.type && doc.type === 'recording' && doc['is-compressed'])\n    emit(doc._id, doc);\n}"
 	},
 	"scheduled": {
-	    "map": "function (doc) {\n  if (doc.type === \"scheduled\")\n    emit(doc._id, doc);\n}"
+	    "map": "function (doc) {\n  if (doc.type && doc.type === 'scheduled')\n    emit(doc._id, doc);\n}"
 	},
 	"capturing": {
-	    "map": "function (doc) {\n  if (doc.type === \"capturing\")\n    emit(doc._id, doc);\n}"
+	    "map": "function (doc) {\n  if (doc.type && doc.type === 'capturing')\n    emit(doc._id, doc);\n}"
 	},
 	"deleted": {
-	    "map": "function (doc) {\n  if ((typeof doc.type === 'string') && (doc.type.substr(0,7) === 'deleted'))    emit(doc._id, doc);\n}"
+	    "map": "function (doc) {\n  if (doc.type && (typeof doc.type === 'string') && (doc.type.substr(0,7) === 'deleted'))\n    emit(doc._id, doc);\n}"
+	},
+	"invalid": {
+	    "map": "function (doc) {\n  if (!doc.type)\n    emit(doc._id, doc);\n}"
 	}
     },
     "language": "javascript"

@@ -63,6 +63,7 @@ if [ ! -d "/mnt/${mntname}/dvr" ]
 then
     mkdir "/mnt/${mntname}/dvr"
     mkdir "/mnt/${mntname}/dvr/raw"
+    mkdir "/mnt/${mntname}/dvr/compressing"
     mkdir "/mnt/${mntname}/dvr/library"
     mkdir "/mnt/${mntname}/dvr/trashcan"
 else
@@ -71,8 +72,10 @@ fi
 
 if [ ! -L "${here}/raw" ]
 then
-    ln -s "/mnt/${mntname}/dvr/raw" "${here}/pi/raw"
-    ln -s "/mnt/${mntname}/dvr/library" "${here}/pi/library"
+    ln -s "/mnt/${mntname}/dvr/raw" "${here}/py/raw"
+    ln -s "/mnt/${mntname}/dvr/compressing" "${here}/py/compressing"
+    ln -s "/mnt/${mntname}/dvr/library" "${here}/py/library"
+    ln -s "/mnt/${mntname}/dvr/trashcan" "${here}/py/trashcan"
     ln -s "/mnt/${mntname}/dvr/raw" "${here}/www/raw"
     ln -s "/mnt/${mntname}/dvr/library" "${here}/www/library"
     ln -s "/mnt/${mntname}/dvr/trashcan" "${here}/www/trashcan"

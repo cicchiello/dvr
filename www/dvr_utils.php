@@ -202,6 +202,7 @@ function renderEntryInfo($id)
    $actualStartStr = date("h:i a",$actualStart);
    $actualEnd = $detail['capture-stop-timestamp'];
    $file = $detail['file'];
+   $isCompressed = $detail['is-compressed'];
 
    $url = "http://ipv4-api.hdhomerun.com/discover";
    $devices = json_decode(file_get_contents($url), true);
@@ -217,7 +218,7 @@ function renderEntryInfo($id)
    foreach ($lineup as $c) {
       $num = $c['GuideNumber'];
       $name = $c['GuideName'];
-      if ($num == $channel) $channelName = $name;
+      if ($num === $channel) $channelName = $name;
    }
 
    $showDbId = false;
@@ -285,7 +286,7 @@ function renderEntryInfo($id)
    $fileExists = file_exists($file);
    $result .= '	 <tr>';
    if ($fileExists) {
-      $result .= '	   <td>File size:</td>';
+      $result .= '	   <td>'.($isCompressed ? 'Compressed ':'').'File size:</td>';
       $result .= '	   <td colspan="2">';
       $result .= '<b style="color:blue" class="w3-right">'.readableSize(realFileSize($file));
    } else {
