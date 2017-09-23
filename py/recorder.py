@@ -218,7 +218,7 @@ def startCapture(n, now, fs):
     n['type'] = 'capturing'
     n['capture-start-timestamp'] = str(now)
     n['pid'] = str(proc.pid)
-    n['file'] = 'raw/'+id
+    n['file'] = 'raw/'+id+'.mp4'
     del n['_id']
     print nowstr(),"Here's the update I'm going to make:", json.dumps(n,indent=3)
     url = POST_URL+'/'+id
