@@ -6,6 +6,6 @@ sleep 10
 
 echo `whoami`
 echo "before invoking anything" >> /home/pi/logs/dvr-startup.log
-python -u /home/pi/dvr/py/compressor.py -ini /home/pi/dvr/py/config.ini -mode prod >> /home/pi/logs/dvr-compressor.log &
-python -u /home/pi/dvr/py/recorder.py -ini /home/pi/dvr/py/config.ini -mode prod >> /home/pi/logs/dvr-recorder.log 
+python -u /home/pi/dvr/py/compressd.py -ini /home/pi/dvr/py/config.ini -mode prod >> /home/pi/logs/dvr-compressd.log &
+python -u /home/pi/dvr/py/recorderd.py -ini /home/pi/dvr/py/config.ini -mode prod >> /home/pi/logs/dvr-recorderd.log 
 echo "recorder.py shutdown" >> /home/pi/logs/dvr-startup.log

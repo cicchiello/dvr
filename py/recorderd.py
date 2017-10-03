@@ -216,7 +216,7 @@ def startCapture(n, now, fs):
     activeCaptureCnt += 1
     id = n['_id']
     n['type'] = 'capturing'
-    n['capture-start-timestamp'] = str(now)
+    n['capture-start-timestamp'] = now
     n['pid'] = str(proc.pid)
     n['file'] = 'raw/'+id+'.mp4'
     del n['_id']
@@ -235,7 +235,7 @@ def stopCapture(s, now):
     activeCaptureCnt -= 1
     id = s['_id']
     s['type'] = 'recording'
-    s['capture-stop-timestamp'] = str(now)
+    s['capture-stop-timestamp'] = now
     del s['pid']
     del s['_id']
     print nowstr(),"Here's the update I'm going to make:", json.dumps(s,indent=3)
