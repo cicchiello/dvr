@@ -266,7 +266,7 @@ function renderEntryInfo($id)
 
    $scheduledDuration = deltaTimeStr($recordEnd-$recordStart);
    $actualDuration = deltaTimeStr($actualEnd-$actualStart);
-   $durationDiscrepancy = $scheduledDuration != $actualDuration;
+   $durationDiscrepancy = abs($scheduledDuration - $actualDuration) > 60;
    $result .= '	 <tr>';
    $result .= '	   <td>'.($durationDiscrepancy ? 'Scheduled Duration':'Duration').':</td>';
    $result .= '	   <td colspan="2">';

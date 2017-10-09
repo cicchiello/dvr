@@ -90,23 +90,23 @@ def selectEarliest(resultSet,now):
     
     earliest = 9999999999
     mini = -1
-    for i in range(0, len(resultSet['rows'])):
-        #print "row[",i,"]:",json.dumps(resultSet['rows'][i]['value'],indent=3)
-        r = resultSet['rows'][i]['value']
+    for i in range(0, len(resultSet)):
+        #print "row[",i,"]:",json.dumps(resultSet[i]['value'],indent=3)
+        r = resultSet[i]['value']
         stime = r['record-end']
         #print "stime: ",stime
         if (stime < earliest):
             mini = i
             earliest = stime
             #print "found an earlier: ",earliest
-    return None if mini == -1 else resultSet['rows'][mini]['value']
+    return None if mini == -1 else resultSet[mini]['value']
 
 
 uncompressedSetRefreshCnt = 0
 def fetchUncompressedRecordingSet():
     global uncompressedSetRefreshCnt
     uncompressedSetRefreshCnt = 0;
-    return json.loads(requests.get(CAPTURED_URL).text)
+    return json.loads(requests.get(CAPTURED_URL).text)['rows']
 
     
 def getUncompressedRecordingSet(prev):
@@ -181,10 +181,10 @@ def heartbeat(n, now):
     url = POST_URL+'/'+id
     del n['_id']
     n['compression-heartbeat'] = now
-    print nowstr(),"Updating the db heartbeat"
+    #print nowstr(),"Updating the db heartbeat"
     #print nowstr(),"Here's the update I'm going to make:", json.dumps(n,indent=3)
     r = requests.put(url, auth=DbWriteAuth, json=n)
-    print nowstr(),("Success" if 'ok' in r.json() else "Failed: "+r.json())
+    #print nowstr(),("Success" if 'ok' in r.json() else "Failed: "+r.json())
     n['_id'] = id
     n['_rev'] = r.json()['rev']
     return n
@@ -245,12 +245,12 @@ def handleUncompressedRecordingSet(rs, now, fs):
 
 
 def zombieHunt(now):
-    rset = json.loads(requests.get(COMPRESSING_URL).text)
-    if (rset == None):
-        return
-
-    for i in range(0, len(rset['rows'])):
-        n = rset['rows'][i]['value']
+    rset = json.loads(requests.get(COMPRESSING_URL).text)['rows']
+    #print nowstr(),"DEBUG: there are",len(rset),"compressing jobs found"
+    #print nowstr(),"DEBUG: heres rset:",json.dumps(rset,indent=3)
+    for i in range(0, len(rset)):
+        #print nowstr(),"DEBUG: here's rset[i]:",json.dumps(rset[i],indent=3)
+        n = rset[i]['value']
         if (now > n['compression-heartbeat']+60*2*ZOMBIE_HUNT_RATE_MIN):
             print nowstr(),'Found a zombie!  Reverting it to uncompressed state.'
             revertCompression(n, now, dvr_fs)
