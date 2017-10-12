@@ -59,16 +59,11 @@ else
     echo "Python psutil appears to be installed; skipping..."
 fi
 
-if [ ! -d "/mnt/${mntname}/dvr" ]
-then
-    mkdir "/mnt/${mntname}/dvr"
-    mkdir "/mnt/${mntname}/dvr/raw"
-    mkdir "/mnt/${mntname}/dvr/compressing"
-    mkdir "/mnt/${mntname}/dvr/library"
-    mkdir "/mnt/${mntname}/dvr/trashcan"
-else
-    echo "Fileshare folders appear to be setup; skipping..."
-fi
+mkdir -p "/mnt/${mntname}/dvr"
+mkdir -p "/mnt/${mntname}/dvr/raw"
+mkdir -p "/mnt/${mntname}/dvr/compressing"
+mkdir -p "/mnt/${mntname}/dvr/library"
+mkdir -p "/mnt/${mntname}/dvr/trashcan"
 
 if [ ! -L "${here}/raw" ]
 then

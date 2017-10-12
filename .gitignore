@@ -6,3 +6,7 @@ raw
 library
 compressing
 trashcan
+fdk-aac
+ffmpeg
+lame
+x264

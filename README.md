@@ -69,6 +69,12 @@
    > sudo ./init-dvr.bsh mybook http://joes-mac-mini:5984
 ```
 
+   * Setup ffmpeg (used for conversion to h264 formats, effectively compressing by 2x-3x)
+   
+```
+   > sudo ./init-ffmepg.bsh 
+```
+   
     Where:
           mybook: use the same name as above on usbdrive-setup.bsh
 	        http://joes-mac-mini:5984 is the url to the CouchDb that contains the dvr database

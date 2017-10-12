@@ -32,7 +32,7 @@ fi
 #   https://sebastian.korotkiewicz.eu/2016/09/30/ffmpeg-on-raspbian-raspberry-pi/
 if [ ! -d "${here}/x264" ]
 then
-    git clone --depth 1 git://git.vedeolan.org/x264
+    git clone --depth 1 git://git.videolan.org/x264
     cd x264
     ./configure --host=arm-unknown-linux-gnueabi --enable-static --disable-opencl
     make -j 4
@@ -57,7 +57,7 @@ if [ ! -d "${here}/ffmpeg" ]
 then
     git clone --depth=1 git://source.ffmpeg.org/ffmpeg.git
     cd ffmpeg
-    ./configure --arch=armel --target-os=linux --enable-gpl --enable-libx264 --enable-libmp3lame --enable-nonfree --enable-mmal --enable-omx --enable-omx-rpi
+    ./configure --arch=armel --target-os=linux --enable-gpl --enable-libx264 --enable-libmp3lame --enable-nonfree --enable-mmal
     make -j 4
     make install
     ldconfig
@@ -102,4 +102,3 @@ fi
 #   - NOTE: output file extension appears to really matter!  Use "mpg" -- then you can change it
 #     to mp4 later.  Without doing that, no audio ends up in the stream.
 
-popd
