@@ -9,3 +9,14 @@ echo "before invoking anything" >> /home/pi/logs/dvr-startup.log
 python -u /home/pi/dvr/py/compressd.py -ini /home/pi/dvr/py/config.ini -mode prod >> /home/pi/logs/dvr-compressd.log &
 python -u /home/pi/dvr/py/recorderd.py -ini /home/pi/dvr/py/config.ini -mode prod >> /home/pi/logs/dvr-recorderd.log 
 echo "recorder.py shutdown" >> /home/pi/logs/dvr-startup.log
+
+echo "To: j.cicchiello@ieee.org" > /tmp/msg.txt
+echo "From: jcicchiello@ptd.net" >> /tmp/msg.txt
+echo "Subject: recorderd.py has crashed!?!?!" >> /tmp/msg.txt
+echo "" >> /tmp/msg.txt
+echo "recorderd.py has shutdown unexpectedly!" >> /tmp/msg.txt
+echo $(date) >> /tmp/msg.txt
+echo "" >> /tmp/msg.txt
+ssmtp j.cicchiello@gmail.com < /tmp/msg.txt
+
+

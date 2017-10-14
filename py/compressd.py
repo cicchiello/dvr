@@ -122,11 +122,23 @@ def getUncompressedRecordingSet(prev):
         return prev
 
 
+def cleanDescription(d):
+    cleanedDescription = ''
+    legalchars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-., '
+    for c in d:
+        if (c not in legalchars):
+            c = 'X'
+        cleanedDescription += c
+    return cleanedDescription
+    
+
 def closeCompression(n, now, fs):
-    #mv resulting h264 file to ./library
+    #setup symlink to esulting h264 file in ./library
+    
+    #  (but first due to quirk in ffmpeg libs, have to correct the file extension)
     id = n['_id']
-    tmpfile = fs+'/compressing/'+id+'.mpg';
-    outfile = fs+'/library/'+id+'.mp4';
+    tmpfile = fs+'/compressed/'+id+'.mpg';
+    outfile = fs+'/compressed/'+id+'.mp4';
     cmdArr = ['/bin/mv',tmpfile,outfile]
     print nowstr(),"INFO: mv result file cmd: ",cmdArr
 
@@ -136,6 +148,10 @@ def closeCompression(n, now, fs):
     except subprocess.CalledProcessError as e:
         print "subprocess.CalledProcessError:",e.output
         exit()
+    
+    dstfile = fs+'/library/'+cleanDescription(id)+'.mp4';
+    print nowstr(),"DEBUG: Here's the symlink to establish:",outfile," ",dstfile
+    os.symlink(outfile, dstfile)
     
     #mv raw file to ./trashcan
     infile = fs+'/'+n['file']
@@ -156,7 +172,7 @@ def closeCompression(n, now, fs):
     n.pop('compressing', None)
     n.pop('compression-heartbeat', None)
     n['compression-end-timestamp'] = now
-    n['file'] = 'library/'+id+'.mp4'
+    n['file'] = 'compressed/'+id+'.mp4'
     n['is-compressed'] = True;
     print nowstr(),"Here's the update I'm going to make:", json.dumps(n,indent=3)
     r = requests.put(url, auth=DbWriteAuth, json=n)
@@ -204,7 +220,7 @@ def compress(n, now, fs):
 
         #spawn the compression job
         infile = fs+'/'+n['file']
-        tmpfile = fs+'/compressing/'+id+'.mpg';
+        tmpfile = fs+'/compressed/'+id+'.mpg';
         cmdArr = ['/usr/local/bin/ffmpeg','-loglevel','quiet','-i',infile, \
                   '-vf','yadif=1','-vf','scale=-1:720','-c:v','libx264','-y',tmpfile];
         print nowstr(),'INFO: compression cmd to issue: ',cmdArr

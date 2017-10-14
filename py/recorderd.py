@@ -11,6 +11,7 @@ import time
 import datetime
 import sys
 import configparser
+from copy import deepcopy
 
 
 ZOMBIE_HUNT_RATE_MIN=60
@@ -81,6 +82,15 @@ CAPTURING_URL = VIEW_BASE+'capturing'
 
 activeCaptures=[]
 
+def cleanDescription(d):
+    cleanedDescription = ''
+    legalchars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-., '
+    for c in d:
+        if (c not in legalchars):
+            c = 'X'
+        cleanedDescription += c
+    return cleanedDescription
+    
 def fetchScheduledSet():
     return json.loads(requests.get(SCHEDULE_URL).text)
 
@@ -112,12 +122,13 @@ def selectNextMissedStart(resultSet,now):
     
     earliest = 9999999999
     mini = -1
+    #print nowstr(),"DEBUG: resultSet['rows']:",json.dumps(resultSet['rows'],indent=3)
     for i in range(0, len(resultSet['rows'])):
-        #print "row[",i,"]:",json.dumps(v['rows'][i]['value'],indent=3)
         r = resultSet['rows'][i]['value']
         stime = int(r['record-start'])
         etime = int(r['record-end'])
         if (stime < now and now < etime and stime < earliest):
+            #print nowstr(),"DEBUG: tentatively choosing",i
             mini = i
             earliest = stime
     return None if mini == -1 else resultSet['rows'][mini]['value']
@@ -132,7 +143,7 @@ def selectNextStart(resultSet,now):
     for i in range(0, len(resultSet['rows'])):
         #print "row[",i,"]:",json.dumps(v['rows'][i]['value'],indent=3)
         r = resultSet['rows'][i]['value']
-        stime = r['record-start']
+        stime = int(r['record-start'])
         if ((stime > now) and (stime < now + 60) and (stime < earliest)):
             mini = i
             earliest = stime
@@ -148,7 +159,7 @@ def selectNextStop(resultSet,now):
     for i in range(0, len(resultSet['rows'])):
         #print "row[",i,"]:",json.dumps(v['rows'][i]['value'],indent=3)
         r = resultSet['rows'][i]['value']
-        stime = r['record-end']
+        stime = int(r['record-end'])
         if ((stime > now) and (stime < now + 60) and (stime < earliest)):
             mini = i
             earliest = stime
@@ -161,7 +172,7 @@ def getScheduledSet(prev):
     resetIt = prev == None
     if (not resetIt):
         scheduledSetRefreshCnt += 1
-        resetIt = (scheduledSetRefreshCnt > 15)
+        resetIt = (scheduledSetRefreshCnt > 3)
     if (resetIt):
         scheduledSetRefreshCnt = 0
         return fetchScheduledSet()
@@ -215,8 +226,7 @@ def invoke(n, fs):
 def startCapture(n, now, fs):
     global activeCaptures
     proc = invoke(n, fs)
-    print nowstr(),"INFO: returned from invoke"
-    activeCaptures.append({'pid':proc.pid,'record':n,'heartbeat':now})
+    #print nowstr(),"INFO: returned from invoke"
     id = n['_id']
     n['type'] = 'capturing'
     n['capture-start-timestamp'] = now
@@ -227,35 +237,58 @@ def startCapture(n, now, fs):
     print nowstr(),"Here's the update I'm going to make:", json.dumps(n,indent=3)
     url = POST_URL+'/'+id
     r = requests.put(url, auth=DbWriteAuth, json=n)
-    #print r.json()
+    #print nowstr(),("Success" if 'ok' in r.json() else "Failed: "+r.json())
+    n['_id'] = id
+    n['_rev'] = r.json()['rev']
+    activeCaptures.append({'pid':proc.pid,'record':deepcopy(n),'heartbeat':now})
+    #print nowstr(),"DEBUB: activeCaptures:", json.dumps(activeCaptures,indent=3)
 
 
 def stopCapture(s, now):
     global activeCaptures
-    print nowstr(),"DEBUG: activeCaptures before removing completed capture:", json.dumps(activeCaptures, indent=3)
-    activeCaptures = [x for x in activeCaptures if x['pid'] != s['pid']]
-    print nowstr(),"DEBUG: activeCaptures after removing completed capture:", json.dumps(activeCaptures, indent=3)
-    process = psutil.Process(s['pid'])
-    for proc in process.children(recursive=True):
-        proc.kill()
-    process.kill()
+
+    print nowstr(),"DEBUG: completed capture of:", json.dumps(s,indent=3)
+    print nowstr(),"DEBUG: activeCaptures before removing completed capture:", \
+        json.dumps(activeCaptures, indent=3)
+
+    newActiveCaptures = []
+    for x in activeCaptures:
+        if x['pid'] == s['pid']:
+            # x might have a more recent _rev depending on timing of heartbeats and refreshes
+            s = x['record']
+            process = psutil.Process(s['pid'])
+            for proc in process.children(recursive=True):
+                proc.kill()
+            process.kill()
+        else:
+            newActiveCaptures.append(x)
+    activeCaptures = newActiveCaptures
+    print nowstr(),"DEBUG: activeCaptures after removing completed capture:", \
+        json.dumps(activeCaptures, indent=3)
+    print nowstr(),"DEBUG: s after shutting down process:", json.dumps(s, indent=3)
+            
     id = s['_id']
-    src = s['file']
-    s['type'] = 'recording'
-    s['capture-stop-timestamp'] = now
+    print nowstr(), "TRACE: 1"
+    hasHeartbeat = 'capture-heartbeat' in s
+    print nowstr(), "TRACE: 2"
+    s['capture-stop-timestamp'] = s['capture-heartbeat'] if hasHeartbeat else now
+    print nowstr(), "TRACE: 3"
     del s['pid']
+    print nowstr(), "TRACE: 4"
     del s['_id']
+    print nowstr(), "TRACE: 5"
+    s.pop('capture-heartbeat', None)
+    print nowstr(), "TRACE: 6"
+    s['type'] = 'recording'
+    
     print nowstr(),"Here's the update I'm going to make:", json.dumps(s,indent=3)
     url = POST_URL+'/'+id
     r = requests.put(url, auth=DbWriteAuth, json=s)
     #print r.json()
-
-    cleanedDescription = ''
-    for c in s['description']:
-        if (c not in 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-. '):
-            c = 'X'
-        cleanedDescription += c
-    dst = 'library/'+cleanedDescription+'.mp4'
+    
+    dst = dvr_fs+'/library/'+cleanDescription(s['description'])+'.mp4'
+    src = dvr_fs+'/'+s['file']
+    print nowstr(),"DEBUG: Here's the symlink to establish:",src," ",dst
     os.symlink(src, dst)
 
     
@@ -263,7 +296,7 @@ def handleLateStarts(rs, now, fs):
     #print json.dumps(rs,indent=3)
     late = selectNextMissedStart(rs, now)
     while (late != None):
-        print nowstr(),"INFO: Found at least one schedule that should have started already!  Starting now."
+        print nowstr(),"INFO: Found a schedule that should have started already!  Starting now."
         startCapture(late, now, fs)
         rs = fetchScheduledSet()
         late = selectNextMissedStart(rs, now)
@@ -274,7 +307,7 @@ def handleNextStart(rs, now, fs):
     #print json.dumps(rs,indent=3)
     n = selectNextStart(rs, now)
     while (n != None):
-        print nowstr(),"INFO: Found a schedule that starts within a minute; starting it now"
+        print nowstr(),"INFO: Found a schedule due to start within a minute; starting it now"
         startCapture(n, now, fs)
         rs = fetchScheduledSet()
         n = selectNextStart(rs, now)
@@ -298,9 +331,9 @@ def heartbeat(n, now):
     del n['_id']
     n['capture-heartbeat'] = now
     print nowstr(),"DEBUG: Updating the db heartbeat"
-    print nowstr(),"DEBUG: Here's the update I'm going to make:", json.dumps(n,indent=3)
+    #print nowstr(),"DEBUG: Here's the update I'm going to make:", json.dumps(n,indent=3)
     r = requests.put(url, auth=DbWriteAuth, json=n)
-    print nowstr(),("Success" if 'ok' in r.json() else "Failed: "+r.json())
+    #print nowstr(),("Success" if 'ok' in r.json() else "Failed: "+r.json())
     n['_id'] = id
     n['_rev'] = r.json()['rev']
     return n
@@ -315,20 +348,21 @@ def zombieHunt(now):
     for i in range(0, len(rset)):
         n = rset[i]['value']
         hasHeartbeat = 'capture-heartbeat' in n
-        isZombie = not hasHeartbeat and (now > (n['record-end']+60*ZOMBIE_HUNT_RATE_MIN))
-        isZombie = isZombie or (now > n['capture-heartbeat']+60*ZOMBIE_HUNT_RATE_MIN)
+        isZombie = not hasHeartbeat and (now > (int(n['record-end'])+60*ZOMBIE_HUNT_RATE_MIN))
+        isZombie = isZombie or (now > int(n['capture-heartbeat'])+60*ZOMBIE_HUNT_RATE_MIN)
         if (isZombie):
-            #print nowstr(),'DEBUG: Found a zombie! ',json.dumps(n,indent=3)
             id = n['_id']
             url = POST_URL+'/'+id
             del n['_id']
             n.pop('pid', None)
             n['capture-stop-timestamp'] = n['capture-heartbeat'] if hasHeartbeat else now
             n.pop('capture-heartbeat', None)
-            n['type'] = 'recording'
-            print nowstr(),"Here's the update I'm going to make:", json.dumps(n,indent=3)
+            n['type'] = 'error';
+            n['errmsg']  = 'identified as capture-zombie';
+            print nowstr(),"Found a zombie!  Here's the update I'm going to make:", \
+                json.dumps(n,indent=3)
             r = requests.put(url, auth=DbWriteAuth, json=n)
-            print nowstr(),("Success" if 'ok' in r.json() else "Failed: "+r.json())
+            #print nowstr(),("Success" if 'ok' in r.json() else "Failed: "+r.json())
 
 
 
@@ -365,7 +399,7 @@ while (True):
     now = calendar.timegm(time.gmtime())
     newCaptures = []
     for capture in activeCaptures:
-        print nowstr(),"DEBUG: capture:",json.dumps(capture,indent=3)
+        #print nowstr(),"DEBUG: capture:",json.dumps(capture,indent=3)
         n = capture['record'];
         hb = capture['heartbeat'];
         if (now > hb+60):

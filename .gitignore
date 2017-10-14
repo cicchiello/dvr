@@ -4,7 +4,7 @@
 .psutil-installed
 raw
 library
-compressing
+compressed
 trashcan
 fdk-aac
 ffmpeg

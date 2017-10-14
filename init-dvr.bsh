@@ -61,14 +61,14 @@ fi
 
 mkdir -p "/mnt/${mntname}/dvr"
 mkdir -p "/mnt/${mntname}/dvr/raw"
-mkdir -p "/mnt/${mntname}/dvr/compressing"
+mkdir -p "/mnt/${mntname}/dvr/compressed"
 mkdir -p "/mnt/${mntname}/dvr/library"
 mkdir -p "/mnt/${mntname}/dvr/trashcan"
 
 if [ ! -L "${here}/raw" ]
 then
     ln -s "/mnt/${mntname}/dvr/raw" "${here}/py/raw"
-    ln -s "/mnt/${mntname}/dvr/compressing" "${here}/py/compressing"
+    ln -s "/mnt/${mntname}/dvr/compressed" "${here}/py/compressed"
     ln -s "/mnt/${mntname}/dvr/library" "${here}/py/library"
     ln -s "/mnt/${mntname}/dvr/trashcan" "${here}/py/trashcan"
     ln -s "/mnt/${mntname}/dvr/raw" "${here}/www/raw"
