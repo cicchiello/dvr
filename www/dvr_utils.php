@@ -106,6 +106,7 @@ function getMenuCnts()
    $devices = json_decode(file_get_contents($url), true);
 
    $numRecordings = 0;
+   $numCapturing = 0;
    $numChannels = 0;
    $numScheduled = 0;
    foreach ($devices as $device) {
@@ -113,9 +114,11 @@ function getMenuCnts()
       $device_detail = json_decode(file_get_contents($deviceUrl), true);
       $lineupJsonUrl = $device_detail['LineupURL'];
       $recordingsUrl = $DbViewBase.'/recordings';
+      $capturingUrl = $DbViewBase.'/capturing';
 	     
       $numChannels += sizeof(json_decode(file_get_contents($lineupJsonUrl), true));
       $numRecordings += json_decode(file_get_contents($recordingsUrl), true)['total_rows'];
+      $numCapturing += json_decode(file_get_contents($capturingUrl), true)['total_rows'];
 
       $scheduledUrl = $DbViewBase.'/scheduled';
       $result = json_decode(file_get_contents($scheduledUrl), true);
@@ -126,7 +129,8 @@ function getMenuCnts()
    return array(
       "numChannels" => $numChannels,
       "numRecordings" => $numRecordings,
-      "numScheduled" => $numScheduled
+      "numScheduled" => $numScheduled,
+      "numCapturing" => $numCapturing
       );
 }
 
@@ -176,7 +180,7 @@ function renderRecordingsTable($items, $actions)
       $cnt += 1;
    }
    if ($cnt == 0) {
-      $result .= "<p>No Recordings available.</p>";
+      $result .= "<p>Nothing Scheduled.</p>";
    } else {
       $result .= '</table>';
    }
@@ -319,12 +323,14 @@ function renderMainMenu()
    $d = getMenuCnts();
    $enabled = array(
       'live' => true,
-      'recordings' => true,
+      'library' => true,
+      'recording' => true,
       'scheduled' => true
    );
    $refs = array(
       'live' => './live.php',
-      'recordings' => './recordings.php',
+      'library' => './recordings.php',
+      'recording' => './recordings.php',
       'scheduled' => './schedules.php'
    );
 
@@ -335,6 +341,7 @@ function renderMainMenu()
    $result .= '   <div id="menuItems" class="w3-hide">';
    $result .= renderMenuItems($enabled,$refs);
    $result .= '   </div>';
+   $result .= ' </div>';
    
    return $result;
 }
@@ -346,22 +353,32 @@ function renderMenuItems($enabled,$refs)
 
    $imgs = array(
       'live' => 'img/livetv2.png',
-      'recordings' => 'img/video.png',
-      'scheduled' => 'img/schd.png'
+      'library' => 'img/video.png',
+      'recording' => 'img/recording.png',
+      'scheduled' => 'img/schedule.png'
    );
    $imgs_gray = array(
       'live' => 'img/livetv2-gray.png',
-      'recordings' => 'img/video-gray.png',
+      'library' => 'img/video-gray.png',
+      'recording' => 'img/recording-gray.png',
       'scheduled' => 'img/schd-gray.png'
+   );
+   $lbl_singular = array(
+      'live' => 'Channel',
+      'library' => 'Item',
+      'recording' => 'Recording',
+      'scheduled' => 'Scheduled'
    );
    $lbl = array(
       'live' => 'Channels',
-      'recordings' => 'Recordings',
+      'library' => 'Items',
+      'recording' => 'Recording',
       'scheduled' => 'Scheduled'
    );
    $lbl_val = array(
       'live' => $d['numChannels'],
-      'recordings' => $d['numRecordings'],
+      'library' => $d['numRecordings'],
+      'recording' => $d['numCapturing'],
       'scheduled' => $d['numScheduled']
    );
    
@@ -375,7 +392,11 @@ function renderMenuItems($enabled,$refs)
       $result .= '     <div class="menuLbl Btn" title="'.$key.'">';
       if ($enabled[$key]) {
          $result .= '<img id="menu'.$cnt.'" src="'.$imgs[$key].'" width="64" height="64" class="Btn">';
-         $result .= '<p><b>'.$lbl_val[$key].' '.$lbl[$key].'</b></p>';
+	 if ($lbl_val[$key] == 1) {
+	    $result .= '<p><b>'.$lbl_val[$key].' '.$lbl_singular[$key].'</b></p>';
+	 } else {
+	    $result .= '<p><b>'.$lbl_val[$key].' '.$lbl[$key].'</b></p>';
+	 }
       } else {
          $result .= '<img id="menu'.$cnt.'" src="'.$imgs_gray[$key].'" width="64" height="64">';
          $result .= '<span style="color:#7a9538"><p><b>'.$lbl_val[$key].' '.$lbl[$key].'</b></p></span>';
@@ -397,8 +418,8 @@ function renderMenu($enabled)
 {
    $result = '';
    $result .= ' <div id="menuArea">';
-   $result .= '   <a class="_URL" href="./index.php">';
-   $result .= '     <img src="img/home.png" width="64" height="64" title="Home" class="Btn">';
+   $result .= '   <a style="border:5px" class="_URL" href="./index.php">';
+   $result .= '     <img src="img/home.png" width="64" height="74" title="Home" style="padding:5px;" class="Btn">';
    $result .= '   </a>';
    $result .= '   <div id="menuItems" class="w3-show">';
    $result .= renderMenuItems($enabled);

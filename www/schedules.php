@@ -3,26 +3,27 @@
   
   <head>
     
-  <link rel="shortcut icon" type="image/x-icon" href="./img/dvr-favicon.ico" />
-  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css">
-  
-  <link href="./w3.css" media="all" rel="stylesheet">
-  
-  <link rel="stylesheet" href="http://cdn.kendostatic.com/2015.1.429/styles/kendo.common-material.min.css" />
-  <link rel="stylesheet" href="http://cdn.kendostatic.com/2015.1.429/styles/kendo.material.min.css" />
-  <link rel="stylesheet" href="http://cdn.kendostatic.com/2015.1.429/styles/kendo.dataviz.min.css" />
-  <link rel="stylesheet" href="http://cdn.kendostatic.com/2015.1.429/styles/kendo.dataviz.material.min.css" />
+    <?php
+       include('dvr_utils.php');
 
-  <script src="http://cdn.kendostatic.com/2015.1.429/js/jquery.min.js"></script>
-  <script src="http://cdn.kendostatic.com/2015.1.429/js/kendo.all.min.js"></script>
+       echo renderLookAndFeel();
+       ?>
+    
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css">
   
-  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
+    <link href="./table.css" media="all" rel="stylesheet" />
+    <link href="./search.css" media="all" rel="stylesheet" />
+    
+    <link rel="stylesheet" href="http://cdn.kendostatic.com/2015.1.429/styles/kendo.common-material.min.css" />
+    <link rel="stylesheet" href="http://cdn.kendostatic.com/2015.1.429/styles/kendo.material.min.css" />
+    <link rel="stylesheet" href="http://cdn.kendostatic.com/2015.1.429/styles/kendo.dataviz.min.css" />
+    <link rel="stylesheet" href="http://cdn.kendostatic.com/2015.1.429/styles/kendo.dataviz.material.min.css" />
+    
+    <script src="http://cdn.kendostatic.com/2015.1.429/js/jquery.min.js"></script>
+    <script src="http://cdn.kendostatic.com/2015.1.429/js/kendo.all.min.js"></script>
+    
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
 
-  <link href="./style.css" media="all" rel="stylesheet" />
-  <link href="./table.css" media="all" rel="stylesheet" />
-  <link href="./menu.css" media="all" rel="stylesheet" />
-  <link href="./search.css" media="all" rel="stylesheet" />
-  
   <style>
      .popupBtn:hover {
         outline: none; /* Remove outline */
@@ -55,6 +56,16 @@
 	border: 4px solid blue;
      }
 
+     .menuIcon {
+        display: block; /* block element by default */
+        z-index: 99; /* Make sure it does not overlap */
+        border: none; /* Remove borders */
+        outline: none; /* Remove outline */
+        background-color: #44661b; /* Set a background color */
+        padding: 5px; /* Some padding */
+        border-radius: 10px; /* Rounded corners */
+     }
+     
   </style>
 
   <script>
@@ -145,65 +156,24 @@
 
   </head>
   
-	  <?php
-             include('dvr_utils.php');
-	     
-	     $ini = parse_ini_file("./config.ini");
-	     $DbBase = $ini['couchbase'];
-	     $Db = "dvr";
-	     $DbViewBase = $DbBase.'/'.$Db.'/_design/dvr/_view';
-	     
-	     $url = "http://ipv4-api.hdhomerun.com/discover";
-	     $devices = json_decode(file_get_contents($url), true);
-
-	     $numRecordings = 0;
-	     $numChannels = 0;
-	     $numScheduled = 0;
-	     $deviceId = "TBD";
-	     foreach ($devices as $device) {
-	        $deviceUrl = $device['DiscoverURL'];
-	        $device_detail = json_decode(file_get_contents($deviceUrl), true);
-	        $deviceId = $device_detail['DeviceID'];
-	        $lineupJsonUrl = $device_detail['LineupURL'];
-	        $recordingsUrl = $DbViewBase.'/recordings';
-	     
-	        $lineup = json_decode(file_get_contents($lineupJsonUrl), true);
-	        $numChannels += sizeof($lineup);
-	        $numRecordings += json_decode(file_get_contents($recordingsUrl), true)['total_rows'];
-
-	        $scheduledUrl = $DbViewBase.'/scheduled';
-	        $result = json_decode(file_get_contents($scheduledUrl), true);
-	        $scheduled = $result['rows'];
-	        $numScheduled = $result['total_rows'];
-	     }
-	  ?>
   <body class="bg" onload="init()">
 
-    <div class="menuArea">
-      <div id="menuItems" class="w3-show">
-	<a class="_URL" href="./index.php">
-	  <div class="menuLbl Btn" title="Home">
-            <img src="img/home.png" width="64" height="64">
-	    <span style="color:#7a9538"><p></p></span>
-	  </div>
-	</a>
-	
-	<div class="menuLbl Btn">
-	    <img id="menu1" src="img/livetv2-gray.png" width="64" height="64">
-	    <span style="color:#7a9538"><p><b><?php echo $numChannels; ?> Channels</b></p></span>
-	</div>
-	<div class="menuLbl Btn">
-	    <img id="menu2" src="img/video-gray.png" width="64" height="64">
-	    <span style="color:#7a9538"><p><b><?php echo $numRecordings; ?> Recordings</b></p></span>
-	</div>
-	<div class="menuLbl Btn">
-	    <img id="menu3" src="img/schd.png" width="64" height="64">
-	    <p><b><?php echo $numScheduled; ?> Scheduled</b></p>
-	</div>
-      </div>
-    </div>
-
-
+    <?php
+      $ini = parse_ini_file("./config.ini");
+      $DbBase = $ini['couchbase'];
+      $Db = "dvr";
+      $DbViewBase = $DbBase.'/'.$Db.'/_design/dvr/_view';
+      
+      $enabled = array(
+	'live' => false,
+	'library' => false,
+	'recording' => false,
+	'scheduled' => true
+      );
+	      
+      echo renderMenu($enabled);
+      ?>
+ 
     <div id="scheduled" class="w3-container w3-display-middle w3-show">
       
       <div class="w3-panel w3-card w3-white w3-padding-16 w3-round-large">

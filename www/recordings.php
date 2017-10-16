@@ -31,7 +31,8 @@
     <?php
        $enabled = array(
           'live' => false,
-          'recordings' => true,
+          'library' => true,
+          'recording' => false,
           'scheduled' => false
        );
    

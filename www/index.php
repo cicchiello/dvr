@@ -7,46 +7,9 @@
     
   <link href="./w3.css" media="all" rel="stylesheet">
   <link href="./style.css" media="all" rel="stylesheet">
+  <link href="./menu2.css" media="all" rel="stylesheet">
 
   <style>
-     #menuArea {
-        display: block; /* block element by default */
-        position: fixed; /* Fixed position */
-        top: 20px; /* Place the button at the top of the page */
-        left: 30px; /* Place the button 30px from the left */
-        z-index: 99; /* Make sure it does not overlap */
-        border: none; /* Remove borders */
-        outline: none; /* Remove outline */
-        background-color: #44661b; /* Set a background color */
-        color: white; /* Text color */
-        cursor: pointer; /* Add a mouse pointer on hover */
-        padding: 5px; /* Some padding */
-        border-radius: 10px; /* Rounded corners */
-     }
-
-     .Btn:hover {
-        background-color: #465702; /* Add a dark-grey background on hover */
-        outline: none; /* Remove outline */
-     }
-     
-     .menuLbl {
-        height: 64px;
-        width: 200px;
-        position: relative;
-        border: none;
-        outline: none; /* Remove outline */
-     }
-     
-     .menuLbl p {
-        margin: 0;
-        position: absolute;
-        top: 50%;
-        left: 128px;
-        white-space: nowrap;
-        -ms-transform: translate(-50%, -50%);
-        transform: translate(-50%, -50%);
-     }
-     
   </style>
 
   <script>
@@ -62,72 +25,25 @@
   
   </head>
   
-	  <?php
-	     $ini = parse_ini_file("./config.ini");
-	     $DbBase = $ini['couchbase'];
-	     $Db = "dvr";
-	     $DbViewBase = $DbBase.'/'.$Db.'/_design/dvr/_view';
-
-	     $url = "http://ipv4-api.hdhomerun.com/discover";
-	     $devices = json_decode(file_get_contents($url), true);
-
-	     $numRecordings = 0;
-	     $numChannels = 0;
-	     $numScheduled = 0;
-	     foreach ($devices as $device) {
-	        $deviceUrl = $device['DiscoverURL'];
-	        $device_detail = json_decode(file_get_contents($deviceUrl), true);
-	        $lineupJsonUrl = $device_detail['LineupURL'];
-	        $recordingsUrl = $DbViewBase.'/recordings';
-	     
-	        $numChannels += sizeof(json_decode(file_get_contents($lineupJsonUrl), true));
-	        $numRecordings += json_decode(file_get_contents($recordingsUrl), true)['total_rows'];
-
-	        $scheduledUrl = $DbViewBase.'/scheduled';
-	        $result = json_decode(file_get_contents($scheduledUrl), true);
-	        $scheduled = $result['rows'];
-	        $numScheduled = $result['total_rows'];
-	     }
-	  ?>
   <body class="bg">
 
-    <?php include('dvr_utils.php'); ?>
-    
-    <?php echo renderMainMenu(); ?>
+    <?php       
+       include('dvr_utils.php');
+       echo renderMainMenu();
+       ?>
 
-    <div class="row">
-      
-      <div class="box col-sm-4">
-	<div class="w3-panel w3-card w3-white w3-round-large w3-display-bottomright">
-	  <?php
-	     $url = "http://ipv4-api.hdhomerun.com/discover";
-	     $devices = json_decode(file_get_contents($url), true);
-
-	     $cnt = 0;
-	     foreach ($devices as $device) {
-	        $cnt += 1;
-	        $deviceUrl = $device['DiscoverURL'];
-	        $device_detail = json_decode(file_get_contents($deviceUrl), true);
-	        $cableCardUrl = $device['BaseURL'].'/cc.html';
-	     
-	        echo '<div>'.$device_detail['FriendlyName'].' '.$device_detail['DeviceID'].'</div>';
-	        echo '	<ul class="checklist">';
-	        echo '    <li class="_FwStatus warn">FW Version '.$device_detail['FirmwareVersion'].'</li>';
-	        echo '    <li><a class="_URL" href="'.$cableCardUrl.'">CableCARD&trade; Menu</a></li>';
-	        echo '  </ul>';
-	     }
-
-	     if ($cnt == 0) {
-	        echo '    <p>No HDHomeRun detected.</p>';
-	        echo '    <p>Please connect the HDHomeRun to your router and refresh the page.</p>';
-	        echo '    <p>HDHomeRun PRIME: Please remove the CableCard to allow detection to complete.</p>';
-	     }
-	     
-	  ?>
-	</div>
-      </div>
-      
-    </div>
+    <div class="row box col-sm-4 w3-panel w3-card w3-white w3-round-large w3-display-bottomright">
+      <?php
+	 $url = "http://ipv4-api.hdhomerun.com/discover";
+	 $devices = json_decode(file_get_contents($url), true);
+	 
+	 $cnt = count($devices);
+	 if ($cnt == 0) {
+	    echo '    <p>No HDHomeRun detected.</p>';
+	    echo '    <p>Please connect the HDHomeRun to your router and refresh the page.</p>';
+	    echo '    <p>HDHomeRun PRIME: Please remove the CableCard to allow detection to complete.</p>';
+	 }
+	 ?>
     </div>
     
   </body>
