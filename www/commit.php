@@ -63,7 +63,6 @@
 	       $device_detail = json_decode(file_get_contents($deviceUrl), true);
 	       $deviceId = $device_detail['DeviceID'];
 	       $lineupJsonUrl = $device_detail['LineupURL'];
-	       $recordingsUrl = $DbViewBase.'/recordings';
 	    
 	       $lineupJson = json_decode(file_get_contents($lineupJsonUrl), true);
 	       $numChannels += sizeof($lineupJson);

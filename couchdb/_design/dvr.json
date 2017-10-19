@@ -25,6 +25,9 @@
 	"error": {
 	    "map": "function (doc) {\n  if (doc.type && (typeof doc.type === 'string') && (doc.type === 'error'))\n    emit(doc._id, doc);\n}"
 	},
+	"user": {
+	    "map": "function (doc) {\n  if (doc.type && (typeof doc.type === 'string') && (doc.type === 'user'))\n    emit(doc.username, doc);\n}"
+	},
 	"invalid": {
 	    "map": "function (doc) {\n  if (!doc.type)\n    emit(doc._id, doc);\n}"
 	}
