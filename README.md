@@ -5,6 +5,13 @@
 ---
 
 ## Prerequisites:
+   * Start by resizing the sdcard to max
+```
+   > cd /home/pi
+   > sudo raspi-config
+        Advanced Options->Expand Filesystem
+```
+
    * Set the timezone so that all times used by the DVR are sane
 
 ```
