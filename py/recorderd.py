@@ -365,6 +365,34 @@ def zombieHunt(now):
             #print nowstr(),("Success" if 'ok' in r.json() else "Failed: "+r.json())
 
 
+            
+def sysexception(t,e,tb):
+    f = open("/tmp/trap.txt", "w", 0)
+    f.write("To: j.cicchiello@ieee.org\n")
+    f.write("From: jcicchiello@ptd.net\n")
+    f.write("Subject: compressd.py has crashed!?!?\n")
+    f.write("\n")
+    f.write("compressd.py has shutdown unexpectedly!\n")
+    f.write("\n")
+    f.write("type: ")
+    f.write(t)
+    f.write("\n")
+    f.write("exception: ")
+    f.write(e)
+    f.write("\n")
+    f.write("trace back: ")
+    f.write(tb)
+    f.write("\n")
+    f.write("\n")
+    f.close()
+    with open('/tmp/msg.txt', 'r') as infile:
+        subprocess.Popen(['/usr/sbin/ssmtp', 'j.cicchiello@gmail.com'],
+                         stdin=infile, stdout=sys.stdout, stderr=sys.stderr)
+    exit()
+
+
+sys.excepthook = sysexception
+
 
 now = calendar.timegm(time.gmtime())
 zombieTimestamp = now            

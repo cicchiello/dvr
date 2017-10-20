@@ -274,13 +274,23 @@ def zombieHunt(now):
 
 
 
-def sysexception():
+def sysexception(t,e,tb):
     f = open("/tmp/trap.txt", "w", 0)
     f.write("To: j.cicchiello@ieee.org\n")
     f.write("From: jcicchiello@ptd.net\n")
     f.write("Subject: compressd.py has crashed!?!?\n")
     f.write("\n")
-    f.write("compressd.py has shutdown unexpectedly!\n");
+    f.write("compressd.py has shutdown unexpectedly!\n")
+    f.write("\n")
+    f.write("type: ")
+    f.write(t)
+    f.write("\n")
+    f.write("exception: ")
+    f.write(e)
+    f.write("\n")
+    f.write("trace back: ")
+    f.write(tb)
+    f.write("\n")
     f.write("\n")
     f.close()
     with open('/tmp/msg.txt', 'r') as infile:
@@ -304,7 +314,7 @@ while (True):
     #print ""
 
     if (len(activeCompressions) < MAX_COMPRESSIONS):
-        print nowstr(),"looking for newly captured recording to compress..."
+        #print nowstr(),"looking for newly captured recording to compress..."
         urs = handleUncompressedRecordingSet(urs, now, dvr_fs)
         print ""
 
