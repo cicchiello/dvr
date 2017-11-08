@@ -361,7 +361,7 @@ function renderMenuItems($enabled,$refs)
       'live' => 'img/livetv2-gray.png',
       'library' => 'img/video-gray.png',
       'recording' => 'img/recording-gray.png',
-      'scheduled' => 'img/schd-gray.png'
+      'scheduled' => 'img/schedule-gray.png'
    );
    $lbl_singular = array(
       'live' => 'Channel',
@@ -419,7 +419,7 @@ function renderMenu($enabled)
    $result = '';
    $result .= ' <div id="menuArea">';
    $result .= '   <a style="border:5px" class="_URL" href="./index.php">';
-   $result .= '     <img src="img/home.png" width="64" height="74" title="Home" style="padding:5px;" class="Btn">';
+   $result .= '     <img src="img/home.png" width="64" height="64" title="Home" style="padding:5px;" class="Btn">';
    $result .= '   </a>';
    $result .= '   <div id="menuItems" class="w3-show">';
    $result .= renderMenuItems($enabled);

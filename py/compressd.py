@@ -148,8 +148,9 @@ def closeCompression(n, now, fs):
     except subprocess.CalledProcessError as e:
         print "subprocess.CalledProcessError:",e.output
         exit()
-    
-    dstfile = fs+'/library/'+cleanDescription(n['description'])+'.mp4';
+
+    cleanDesc = cleanDescription(n['description'])
+    dstfile = fs+'/library/'+cleanDesc+'.mp4'
     print nowstr(),"DEBUG: Here's the symlink to establish:",outfile," ",dstfile
     os.remove(dstfile)
     os.symlink(outfile, dstfile)
@@ -173,7 +174,7 @@ def closeCompression(n, now, fs):
     n.pop('compressing', None)
     n.pop('compression-heartbeat', None)
     n['compression-end-timestamp'] = now
-    n['file'] = 'compressed/'+id+'.mp4'
+    n['file'] = 'library/'+cleanDesc+'.mp4'
     n['is-compressed'] = True;
     print nowstr(),"Here's the update I'm going to make:", json.dumps(n,indent=3)
     r = requests.put(url, auth=DbWriteAuth, json=n)
@@ -316,7 +317,7 @@ while (True):
     if (len(activeCompressions) < MAX_COMPRESSIONS):
         #print nowstr(),"looking for newly captured recording to compress..."
         urs = handleUncompressedRecordingSet(urs, now, dvr_fs)
-        print ""
+        #print ""
 
     #print nowstr(),"Sleeping..."
     time.sleep(50)
