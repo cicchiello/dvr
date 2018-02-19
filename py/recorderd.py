@@ -367,7 +367,8 @@ def zombieHunt(now):
 
             
 def sysexception(t,e,tb):
-    f = open("/tmp/trap.txt", "w", 0)
+    filename = "/tmp/recorderd-msg.txt"
+    f = open(file, "w", 0)
     f.write("To: j.cicchiello@ieee.org\n")
     f.write("From: jcicchiello@ptd.net\n")
     f.write("Subject: compressd.py has crashed!?!?\n")
@@ -385,7 +386,7 @@ def sysexception(t,e,tb):
     f.write("\n")
     f.write("\n")
     f.close()
-    with open('/tmp/msg.txt', 'r') as infile:
+    with open(filename, 'r') as infile:
         subprocess.Popen(['/usr/sbin/ssmtp', 'j.cicchiello@gmail.com'],
                          stdin=infile, stdout=sys.stdout, stderr=sys.stderr)
     exit()
