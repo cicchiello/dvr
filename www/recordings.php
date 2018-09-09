@@ -20,15 +20,25 @@
        };
     }
 
+    async function forceLogin() {
+      open('./login.php',"_self");
+    }
+    
   </script>
   
   </head>
   
   <?php include('dvr_utils.php'); ?>
 
-  <body class="bg" onload="init()">
+  <body class="bg" 
 
     <?php
+       if (isset($_COOKIE['login_user'])) {
+         echo 'onload="init()">';
+       } else {
+         echo 'onload="forceLogin()">';
+       }
+       
        $enabled = array(
           'live' => false,
           'library' => true,
@@ -36,12 +46,12 @@
           'scheduled' => false
        );
    
-       echo renderMenu($enabled);
+       echo renderMenu($enabled, $_COOKIE['login_user']);
     
        ?>
     
-    <div style="height:90%; width:50%; padding:20px; float:right"
-	 class="w3-white w3-round-large w3-panel">
+    <div style="height:90%; width:50%; padding:20px"
+	 class="w3-white w3-round-large w3-panel w3-display-bottomright">
 
       <iframe id="recordingsFrame" src="./recordingTbl.php"
 	      height="100%" width="100%" frameborder="1" style="float:right; z-index:999">

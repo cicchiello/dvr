@@ -9,16 +9,16 @@
        echo renderLookAndFeel();
        ?>
     
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css">
-  
     <link href="./table.css" media="all" rel="stylesheet" />
     <link href="./search.css" media="all" rel="stylesheet" />
+    <link href="./thumbs.css" media="all" rel="stylesheet" />
     
     <link rel="stylesheet" href="http://cdn.kendostatic.com/2015.1.429/styles/kendo.common-material.min.css" />
     <link rel="stylesheet" href="http://cdn.kendostatic.com/2015.1.429/styles/kendo.material.min.css" />
     <link rel="stylesheet" href="http://cdn.kendostatic.com/2015.1.429/styles/kendo.dataviz.min.css" />
     <link rel="stylesheet" href="http://cdn.kendostatic.com/2015.1.429/styles/kendo.dataviz.material.min.css" />
     
+  
     <script src="http://cdn.kendostatic.com/2015.1.429/js/jquery.min.js"></script>
     <script src="http://cdn.kendostatic.com/2015.1.429/js/kendo.all.min.js"></script>
     
@@ -152,13 +152,24 @@
        window.location.replace('./schedules_del.php', "", "", true);
     }
     
+    async function forceLogin() {
+      open('./login.php',"_self");
+    }
+    
   </script>
 
   </head>
   
-  <body class="bg" onload="init()">
+  <body class="bg" 
 
     <?php
+      if (isset($_COOKIE['login_user'])) {
+        echo 'onload="init()">';
+      } else {
+        echo 'onload="forceLogin()">';
+      }
+       
+
       $ini = parse_ini_file("./config.ini");
       $DbBase = $ini['couchbase'];
       $Db = "dvr";
@@ -171,7 +182,7 @@
 	'scheduled' => true
       );
 	      
-      echo renderMenu($enabled);
+      echo renderMenu($enabled, $_COOKIE['login_user']);
       ?>
  
     <div id="scheduled" class="w3-container w3-display-middle w3-show">
@@ -227,7 +238,7 @@
 		     $place = 'Enter descriptive name...';
 		     echo '<input id="description" required class="search-box" name="descr" type="text"
 				  onchange="setDescription()"
-				  style="color:blue" size="30" placeholder="'.$place.'">';
+				  style="color:blue" size="25" placeholder="'.$place.'">';
 		     echo '<button class="close-icon" onclick="clearDescription()"';
 		   ?>
 		</div>

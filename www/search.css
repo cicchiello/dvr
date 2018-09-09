@@ -7,6 +7,8 @@
         margin-top: 5px;
      }
      .search-box {
+	font-family: inherit;
+	font-size: 14px;
         border: 1px solid #ccc;
         outline: 0;
         border-radius: 5px;
@@ -22,12 +24,13 @@
         vertical-align: middle;
         outline: 0;
         cursor: pointer;
+	color: inherit;
      }
      .close-icon:after {
         content: "X";
         display: block;
-        width: 15px;
-        height: 15px;
+        width: 20px;
+        height: 20px;
         position: absolute;
         background-color: #FA9595;
         z-index:1;
@@ -38,7 +41,7 @@
         padding: 2px;
         border-radius: 50%;
         text-align: center;
-        color: white;
+        color: black;
         font-weight: normal;
         font-size: 12px;
         box-shadow: 0 0 2px #E50F0F;

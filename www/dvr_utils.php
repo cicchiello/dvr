@@ -160,12 +160,13 @@ function renderRecordingsTable($items, $actions)
 
       $q = "'";
       foreach ($actions as $action) {
+         $result .= '              <span class="columns-'.count($actions).'-wide">';
 	 $result .= '              <img onclick="'.$action['onclick'].'('.$q.$id.$q.')"';
          $result .= '                     src="'.$action['src'].'" class="Btn"';
-         $result .= '                     width="32" height="32" title="'.$action['title'].'">';
+         $result .= '                     title="'.$action['title'].'">';
+	 $result .= '              </span>';
       }
 
-      $result .= '                 <span class="stretch"></span>';
       $result .= '              </div>';
       $result .= '  </td>';
       $result .= '</tr>';
@@ -175,7 +176,7 @@ function renderRecordingsTable($items, $actions)
       else
          $result .= '<tr style="background-color:#e2f4dd">';
       $result .= '  <td>Ch '.$channel.' for '.deltaTimeStr($delta).'</td>';
-      $result .= '  <td>'.date(" @h:i a \o\\n D M j, 'y",$start).'</td>';
+      $result .= '  <td>'.date(" @g:ia\, D j\-M-y",$start).'</td>';
       $result .= '</tr>';
       $cnt += 1;
    }
@@ -318,6 +319,23 @@ function renderEntryInfo($id)
 }
 
 
+function renderProfileArea($userName)
+{
+   $result = '  <div id="profileArea" class="row box col-sm-4 w3-panel w3-card w3-white w3-round-large w3-display-topright">';
+   $result .= '    Hi, '.$userName.'!&nbsp;<b>';
+   $result .= '    <a href="profile_action.php" id="ProfileBtn" class="Btn" title="My Profile">';
+   $result .= '      <img class="profileIcon" src="img/profile_626.png">';
+   $result .= '      Profile';
+   $result .= '    </a>&nbsp;';
+   $result .= '    <a href="logout_action.php" id="LogoutBtn" class="Btn" title="Logout">';
+   $result .= '      <img class="profileIcon" src="img/logout_512.png">';
+   $result .= '      Logout';
+   $result .= '    </a>';
+   $result .= ' </div>';
+   
+   return $result;
+}
+
 function renderMainMenu($userName)
 {
    $d = getMenuCnts();
@@ -335,17 +353,7 @@ function renderMainMenu($userName)
    );
 
    $result = '';
-   $result = '  <div id="profileArea" class="row box col-sm-4 w3-panel w3-card w3-white w3-round-large w3-display-topright">';
-   $result .= '    Hi, '.$userName.'!&nbsp;<b>';
-   $result .= '    <a href="profile_action.php" id="ProfileBtn" class="Btn" title="My Profile">';
-   $result .= '      <img class="profileIcon" src="img/profile_626.png">';
-   $result .= '      Profile';
-   $result .= '    </a>&nbsp;';
-   $result .= '    <a href="logout_action.php" id="LogoutBtn" class="Btn" title="Logout">';
-   $result .= '      <img class="profileIcon" src="img/logout_512.png">';
-   $result .= '      Logout';
-   $result .= '    </a>';
-   $result .= ' </div>';
+   $result .= renderProfileArea($userName);
    $result .= ' <div id="menuArea">';
    $result .= '   <input onclick="menuAction()" type="image" src="img/showmenu.png"';
    $result .= '          width="64" height="64" title="Menu" class="Btn">';
@@ -425,9 +433,10 @@ function renderMenuItems($enabled,$refs)
 }
 
 
-function renderMenu($enabled)
+function renderMenu($enabled, $userName)
 {
    $result = '';
+   $result .= renderProfileArea($userName);
    $result .= ' <div id="menuArea">';
    $result .= '   <a style="border:5px" class="_URL" href="./index.php">';
    $result .= '     <img src="img/home.png" width="64" height="64" title="Home" style="padding:5px;" class="Btn">';

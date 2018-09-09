@@ -2,6 +2,8 @@
 <html>
   <head>
   
+    <link href="./thumbs.css" media="all" rel="stylesheet" />
+    
     <style>
       .bg {
 	  height: 100%;
@@ -20,29 +22,6 @@
          background-color: #465702; /* Add a dark-grey background on hover */
          outline: none; /* Remove outline */
          cursor: pointer;
-      }
-      
-      .thumbs {
-          width: 128px;
-	  margin-top:5px;
-	  margin-left: auto;
-	  margin-right: auto;
-	  text-align: justify;
-          -ms-text-justify: distribute-all-lines;
-	  text-justify: distribute-all-lines;
-      }
-      
-      .thumbs img {
-	  vertical-align: top;
-	  display: inline-block;
-	  *display: inline;
-      }
-
-      .stretch {
-	  width: 100%;
-	  display: inline-block;
-	  font-size: 0;
-	  line-height: 0;
       }
       
     </style>

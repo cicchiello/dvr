@@ -1,0 +1,32 @@
+     .thumbs {
+	 text-align: justify;
+	 font-size: 0.1px; /* IE 9/10 fix */
+     }
+     
+     .thumbs span {
+         height: 32px;
+	 text-align: center;
+	 display: inline-block;
+     }
+     
+     .thumbs .columns-2-wide {
+	 width: calc(90% / 2);
+     }
+     
+     .thumbs .columns-3-wide {
+	 width: calc(90% / 3);
+     }
+     
+     .thumbs .columns-4-wide {
+	 width: calc(90% / 4);
+     }
+     
+     .thumbs img {
+	 width: 32px;
+     }
+     
+     .thumbs::after {
+	 content: '';
+	 width: 100%; /* Ensures justification for single lines */
+	 display: inline-block;
+     }
