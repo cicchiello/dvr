@@ -7,7 +7,7 @@
     
   <link href="./w3.css" media="all" rel="stylesheet">
   <link href="./style.css" media="all" rel="stylesheet">
-  <link href="./menu2.css" media="all" rel="stylesheet">
+  <link href="./menu.css" media="all" rel="stylesheet">
 
   <style>
   </style>

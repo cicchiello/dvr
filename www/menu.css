@@ -1,26 +1,41 @@
+     #menuArea {
+        display: block; /* block element by default */
+        position: fixed; /* Fixed position */
+        top: 20px; /* Place the button at the top of the page */
+        left: 30px; /* Place the button 30px from the left */
+        z-index: 99; /* Make sure it does not overlap */
+        border: none; /* Remove borders */
+        outline: none; /* Remove outline */
+        background-color: #44661b; /* Set a background color */
+        color: white; /* Text color */
+        padding: 5px; /* Some padding */
+        border-radius: 10px; /* Rounded corners */
+     }
+
      .Btn:hover {
         background-color: #465702; /* Add a dark-grey background on hover */
         outline: none; /* Remove outline */
         cursor: pointer; /* Add a mouse pointer on hover */
      }
      
-     .menuIcon, .menuArea {
-        display: block; /* block element by default */
-        z-index: 99; /* Make sure it does not overlap */
-        border: none; /* Remove borders */
+     #ProfileBtn.Btn {
+        background-color: #efefef; /* Add a dark-grey background on hover */
         outline: none; /* Remove outline */
-        background-color: #44661b; /* Set a background color */
-        padding: 5px; /* Some padding */
-        border-radius: 10px; /* Rounded corners */
+        cursor: pointer; /* Add a mouse pointer on hover */
      }
      
-     .menuArea {
-        position: fixed; /* Fixed position */
-        top: 20px; /* Place the button at the top of the page */
-        left: 30px; /* Place the button 30px from the left */
-        color: white; /* Text color */
+     #LogoutBtn.Btn {
+        background-color: #efefef; /* Add a dark-grey background on hover */
+        outline: none; /* Remove outline */
+        cursor: pointer; /* Add a mouse pointer on hover */
      }
-
+     
+     #profileArea .Btn:hover {
+        background-color: #C4C4C4; /* Add a dark-grey background on hover */
+        outline: none; /* Remove outline */
+        cursor: pointer; /* Add a mouse pointer on hover */
+     }
+     
      .menuLbl {
         height: 64px;
         width: 200px;
@@ -37,5 +52,36 @@
         white-space: nowrap;
         -ms-transform: translate(-50%, -50%);
         transform: translate(-50%, -50%);
+     }
+     
+     .menuIcon, .menuArea {
+        display: block; /* block element by default */
+        z-index: 99; /* Make sure it does not overlap */
+        border: none; /* Remove borders */
+        outline: none; /* Remove outline */
+        background-color: #44661b; /* Set a background color */
+        padding: 5px; /* Some padding */
+        border-radius: 10px; /* Rounded corners */
+     }
+     
+     .popupBtn:hover {
+        outline: none; /* Remove outline */
+        cursor: pointer; /* Add a mouse pointer on hover */
+     }
+
+     .profileIcon {
+         height: 16px;
+         width: 16px;
+	 margin-left: 6px;
+	 margin-right: 6px;
+	 margin-bottom: -2px;
+	 position: relative;
+	 top: 1px;
+	 display: inline-block;
+	 line-height: 1;
+     }
+
+     .profileUserIcon:before {
+	 content: "\e008";
      }
      

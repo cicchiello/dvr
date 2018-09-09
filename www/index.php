@@ -3,11 +3,9 @@
   
   <head>
     
-  <link rel="shortcut icon" type="image/x-icon" href="./img/dvr-favicon.ico" />
-    
   <link href="./w3.css" media="all" rel="stylesheet">
   <link href="./style.css" media="all" rel="stylesheet">
-  <link href="./menu2.css" media="all" rel="stylesheet">
+  <link href="./menu.css" media="all" rel="stylesheet">
 
   <style>
   </style>
@@ -21,15 +19,26 @@
          x.className = x.className.replace(" w3-show", "");
       }
     }
+
+    async function forceLogin() {
+      open('./login.php',"_self");
+    }
+    
   </script>
   
   </head>
   
-  <body class="bg">
+  <body class="bg"
 
     <?php       
        include('dvr_utils.php');
-       echo renderMainMenu();
+
+       if (isset($_COOKIE['login_user'])) {
+         echo '> ';
+         echo renderMainMenu($_COOKIE['login_user']);
+       } else {
+         echo 'onload="forceLogin()">';
+       }
        ?>
 
     <div class="row box col-sm-4 w3-panel w3-card w3-white w3-round-large w3-display-bottomright">

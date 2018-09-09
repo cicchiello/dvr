@@ -90,7 +90,7 @@ function renderLookAndFeel()
    $result .= '<link rel="shortcut icon" type="image/x-icon" href="./img/dvr-favicon.ico" />';
    $result .= '<link href="./w3.css" media="all" rel="stylesheet">';
    $result .= '<link href="./style.css" media="all" rel="stylesheet">';
-   $result .= '<link href="./menu2.css" media="all" rel="stylesheet">';
+   $result .= '<link href="./menu.css" media="all" rel="stylesheet">';
    return $result;
 }
 
@@ -318,7 +318,7 @@ function renderEntryInfo($id)
 }
 
 
-function renderMainMenu()
+function renderMainMenu($userName)
 {
    $d = getMenuCnts();
    $enabled = array(
@@ -335,6 +335,17 @@ function renderMainMenu()
    );
 
    $result = '';
+   $result = '  <div id="profileArea" class="row box col-sm-4 w3-panel w3-card w3-white w3-round-large w3-display-topright">';
+   $result .= '    Hi, '.$userName.'!&nbsp;<b>';
+   $result .= '    <a href="profile_action.php" id="ProfileBtn" class="Btn" title="My Profile">';
+   $result .= '      <img class="profileIcon" src="img/profile_626.png">';
+   $result .= '      Profile';
+   $result .= '    </a>&nbsp;';
+   $result .= '    <a href="logout_action.php" id="LogoutBtn" class="Btn" title="Logout">';
+   $result .= '      <img class="profileIcon" src="img/logout_512.png">';
+   $result .= '      Logout';
+   $result .= '    </a>';
+   $result .= ' </div>';
    $result .= ' <div id="menuArea">';
    $result .= '   <input onclick="menuAction()" type="image" src="img/showmenu.png"';
    $result .= '          width="64" height="64" title="Menu" class="Btn">';
