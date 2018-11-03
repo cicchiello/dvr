@@ -9,6 +9,10 @@
 	 display: inline-block;
      }
      
+     .thumbs .columns-1-wide {
+	 width: calc(90%);
+     }
+     
      .thumbs .columns-2-wide {
 	 width: calc(90% / 2);
      }

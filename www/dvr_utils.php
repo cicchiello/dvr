@@ -323,7 +323,7 @@ function renderProfileArea($userName)
 {
    $result = '  <div id="profileArea" class="row box col-sm-4 w3-panel w3-card w3-white w3-round-large w3-display-topright">';
    $result .= '    Hi, '.$userName.'!&nbsp;<b>';
-   $result .= '    <a href="profile_action.php" id="ProfileBtn" class="Btn" title="My Profile">';
+   $result .= '    <a href="profile.php" id="ProfileBtn" class="Btn" title="My Profile">';
    $result .= '      <img class="profileIcon" src="img/profile_626.png">';
    $result .= '      Profile';
    $result .= '    </a>&nbsp;';
@@ -448,5 +448,48 @@ function renderMenu($enabled, $userName)
    return $result;
 }
 
+
+function putDb($couchUrl,$row) {
+  //$couchUrl = $WriteDb.'/'.$id;
+  $ch = curl_init($couchUrl);
+  $dataStr = json_encode($row);
+  curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "PUT");
+  curl_setopt($ch, CURLOPT_POSTFIELDS, $dataStr);
+  curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+  curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+       'Content-Type: application/json;charset=UTF-8',
+       'Content-Length: '.strlen($dataStr))
+  );
+  $resultStr = curl_exec($ch);
+  $result = json_decode($resultStr, true);
+}
+
+
+function writeName($id,$fname,$lname) {
+  if (!isset($ini)) {
+    $ini = parse_ini_file("./config.ini");
+  }
+  
+  $WriteDbBase = $ini['couchbase'].'/'.$ini['dbname'];
+  $row = json_decode(file_get_contents($WriteDbBase.'/'.$id), true);
+  $row['firstname'] = $fname;
+  $row['lastname'] = $lname;
+  unset($row['_id']);
+  
+  putDb($WriteDbBase.'/'.$id, $row);
+}
+
+function writeUsername($id,$uname) {
+  if (!isset($ini)) {
+    $ini = parse_ini_file("./config.ini");
+  }
+  
+  $WriteDbBase = $ini['couchbase'].'/'.$ini['dbname'];
+  $row = json_decode(file_get_contents($WriteDbBase.'/'.$id), true);
+  $row['username'] = $uname;
+  unset($row['_id']);
+  
+  putDb($WriteDbBase.'/'.$id, $row);
+}
 
 ?>
