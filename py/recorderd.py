@@ -367,13 +367,14 @@ def zombieHunt(now):
 
             
 def sysexception(t,e,tb):
+    print nowstr(),'sysexception called; preparing an email...'
     filename = "/tmp/recorderd-msg.txt"
     f = open(file, "w", 0)
     f.write("To: j.cicchiello@ieee.org\n")
     f.write("From: jcicchiello@ptd.net\n")
-    f.write("Subject: compressd.py has crashed!?!?\n")
+    f.write("Subject: recorderd.py has crashed!?!?\n")
     f.write("\n")
-    f.write("compressd.py has shutdown unexpectedly!\n")
+    f.write("recorderd.py has shutdown unexpectedly!\n")
     f.write("\n")
     f.write("type: ")
     f.write(t)

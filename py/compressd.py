@@ -276,6 +276,7 @@ def zombieHunt(now):
 
 
 def sysexception(t,e,tb):
+    print nowstr(),'sysexception called; preparing an email...'
     filename = "/tmp/compressd-msg.txt"
     f = open(filename, "w", 0)
     f.write("To: j.cicchiello@ieee.org\n")
