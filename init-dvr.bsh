@@ -50,13 +50,13 @@ else
     echo "Apache installations appear to be done; skipping..."
 fi
 
-if [ ! -f "${here}/.psutil-installed" ]
+if [ ! -f "${here}/.py-packages" ]
 then
     pip install psutil
     pip install configparser
-    touch "${here}/.psutil-installed"
+    touch "${here}/.py-packages"
 else
-    echo "Python psutil appears to be installed; skipping..."
+    echo "Python packages appear to be installed; skipping..."
 fi
 
 mkdir -p "/mnt/${mntname}/dvr"

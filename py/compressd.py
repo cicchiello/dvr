@@ -4,7 +4,9 @@ import json
 import calendar
 import time
 import requests
+import os
 import os.path
+import psutil
 import subprocess
 import time
 import datetime
@@ -208,6 +210,11 @@ def heartbeat(n, now):
     return n
 
 
+def preexec_fn():
+    pid = os.getpid()
+    ps = psutil.Process(pid)
+    ps.set_nice(15)
+
     
 def compress(n, now, fs):
     global activeCompressions
@@ -226,7 +233,7 @@ def compress(n, now, fs):
         cmdArr = ['/usr/local/bin/ffmpeg','-loglevel','quiet','-i',infile, \
                   '-vf','yadif=1','-vf','scale=-1:720','-c:v','libx264','-y',tmpfile];
         print nowstr(),'INFO: compression cmd to issue: ',cmdArr
-        proc = subprocess.Popen(cmdArr, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=False)
+        proc = subprocess.Popen(cmdArr, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=False, preexec_fn=preexec_fn)
         
         print nowstr(),"Here's the db update I'm going to make for id:", id, json.dumps(n,indent=3)
         r = requests.put(url, auth=DbWriteAuth, json=n)
@@ -285,14 +292,17 @@ def sysexception(t,e,tb):
     f.write("\n")
     f.write("compressd.py has shutdown unexpectedly!\n")
     f.write("\n")
-    f.write("type: ")
-    f.write(t)
+    f.write("type 1: ")
+    f.write(str(t))
+    f.write("\n")
+    f.write("type 2: ")
+    f.write(t.__name__)
     f.write("\n")
     f.write("exception: ")
-    f.write(e)
+    f.write(str(e))
     f.write("\n")
     f.write("trace back: ")
-    f.write(tb)
+    f.write(str(tb))
     f.write("\n")
     f.write("\n")
     f.close()
