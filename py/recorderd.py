@@ -341,9 +341,10 @@ def heartbeat(n, now):
 
 
 def zombieHunt(now):
-    #print nowstr(),"On a zombie hunt!"
+    print nowstr(),"On a zombie hunt!"
+    print nowstr(),"Here's the url: "+CAPTURING_URL
     rset = json.loads(requests.get(CAPTURING_URL).text)['rows']
-    #print nowstr(),"DEBUG: there are",len(rset),"capture jobs found"
+    print nowstr(),"DEBUG: there are",len(rset),"capture jobs found"
     #print nowstr(),"DEBUG: here's rset:",json.dumps(rset,indent=3)
     for i in range(0, len(rset)):
         n = rset[i]['value']
@@ -367,25 +368,46 @@ def zombieHunt(now):
 
             
 def sysexception(t,e,tb):
+    progname = "recorderd"
+    
     print nowstr(),'sysexception called; preparing an email...'
-    filename = "/tmp/recorderd-msg.txt"
-    f = open(file, "w", 0)
+    filename = "/tmp/"+progname+"-msg.txt"
+    f = open(filename, "w", 0)
     f.write("To: j.cicchiello@ieee.org\n")
+    print nowstr(), "To: j.cicchiello@ieee.org"
     f.write("From: jcicchiello@ptd.net\n")
-    f.write("Subject: recorderd.py has crashed!?!?\n")
+    print nowstr(), "From: jcicchiello@ptd.net"
+    f.write("Subject: "+progname+".py has crashed!?!?\n")
+    print nowstr(), "Subject: "+progname+".py has crashed!?!?"
     f.write("\n")
-    f.write("recorderd.py has shutdown unexpectedly!\n")
+    print nowstr(), ""
+    f.write(progname+".py has shutdown unexpectedly!\n")
+    print nowstr(), progname+".py has shutdown unexpectedly!"
     f.write("\n")
-    f.write("type: ")
-    f.write(t)
+    print nowstr(), ""
+    f.write("type 1: ")
+    print nowstr(), "type 1: "+str(t)
+    f.write(str(t))
+    f.write("\n")
+    f.write("type 2: ")
+    print nowstr(), "type 2: "+t.__name__
+    f.write(t.__name__)
     f.write("\n")
     f.write("exception: ")
-    f.write(e)
+    print nowstr(), "exception: "+str(e)
+    f.write(str(e))
     f.write("\n")
-    f.write("trace back: ")
-    f.write(tb)
+    print nowstr(), ""
+    f.write("traceback: ")
+    print nowstr(), "traceback: "+str(tb)
+    f.write(str(tb))
     f.write("\n")
+    f.write("traceback.print_exception(etype,value,tb): ")
+    tb.print_exception(t,e,tb,f);
     f.write("\n")
+    print nowstr(), ""
+    f.write("\n")
+    print nowstr(), ""
     f.close()
     with open(filename, 'r') as infile:
         subprocess.Popen(['/usr/sbin/ssmtp', 'j.cicchiello@gmail.com'],
@@ -396,10 +418,13 @@ def sysexception(t,e,tb):
 sys.excepthook = sysexception
 
 
+# Let's wait a bit before starting anything that might need the db, in case it's not available yet
+time.sleep(50)
+
 now = calendar.timegm(time.gmtime())
 zombieTimestamp = now            
 print nowstr(), "Performing Zombie Hunt"
-zombieHunt(now)
+zombieHunt(zombieTimestamp)
 
 srs = getScheduledSet(None)
 crs = getCapturingSet([])
@@ -447,4 +472,4 @@ while (True):
 
     if (now > zombieTimestamp+60*ZOMBIE_HUNT_RATE_MIN):
         zombieTimestamp = now
-        zombieHunt(now)
+        zombieHunt(zombieTimestamp)
