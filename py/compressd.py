@@ -179,7 +179,7 @@ def closeCompression(n, now, fs):
     n['compression-end-timestamp'] = now
     n['file'] = 'library/'+cleanDesc+'.mp4'
     n['is-compressed'] = True;
-    print nowstr(),"Here's the update I'm going to make:", json.dumps(n,indent=3)
+    print nowstr(),"Here's the update I'm going to make: \n", url, json.dumps(n,indent=3)
     r = requests.put(url, auth=DbWriteAuth, json=n)
     print nowstr(),("Success" if 'ok' in r.json() else "Failed: "+r.json())
 
@@ -191,7 +191,7 @@ def revertCompression(n, now, fs):
     n.pop('compressing', None)
     n.pop('compression-start-timestamp', None)
     n.pop('compression-heartbeat', None)
-    print nowstr(),"Here's the update I'm going to make:", json.dumps(n,indent=3)
+    print nowstr(),"Here's the update I'm going to make:\n", url, json.dumps(n,indent=3)
     r = requests.put(url, auth=DbWriteAuth, json=n)
     print nowstr(),("Success" if 'ok' in r.json() else "Failed: "+r.json())
 
@@ -203,9 +203,10 @@ def heartbeat(n, now):
     del n['_id']
     n['compression-heartbeat'] = now
     #print nowstr(),"Updating the db heartbeat"
-    #print nowstr(),"Here's the update I'm going to make:", json.dumps(n,indent=3)
+    print nowstr(),"Here's the heartbeat update I'm going to make:", url, json.dumps(n,indent=3)
     r = requests.put(url, auth=DbWriteAuth, json=n)
-    #print nowstr(),("Success" if 'ok' in r.json() else "Failed: "+r.json())
+    print nowstr(),("Success" if 'ok' in r.json() else "Failed: "+r.json())
+    print nowstr(),"Here's the reply: ", json.dumps(r.json(),indent=3)
     n['_id'] = id
     n['_rev'] = r.json()['rev']
     return n
@@ -240,6 +241,7 @@ def compress(n, now, fs):
         r = requests.put(url, auth=DbWriteAuth, json=n)
         print nowstr(),("Success" if 'ok' in r.json() else "Failed: "+r.json())
         if ('ok' in r.json()):
+            print nowstr(),"Here's the reply: ", json.dumps(r.json(),indent=3)
             n['_rev'] = r.json()['rev']
             n['_id'] = id
             activeCompressions.append({'proc':proc,'record':n,'heartbeat':now})
@@ -250,7 +252,7 @@ def compress(n, now, fs):
         n.pop('compressing', None)
         n.pop('compression-heartbeat', None)
         n['is-compressed'] = True
-        print nowstr(),"Here's the update I'm going to make:", json.dumps(n,indent=3)
+        print nowstr(),"Here's the update I'm going to make:\n", url, json.dumps(n,indent=3)
         r = requests.put(url, auth=DbWriteAuth, json=n)
         print nowstr(),("Success" if 'ok' in r.json() else "Failed: "+r.json())
     return None
@@ -271,6 +273,7 @@ def handleUncompressedRecordingSet(rs, now, fs):
 
 
 def zombieHunt(now):
+    print nowstr(), "Performing Zombie Hunt"
     print nowstr(),"Making GET request to: "+COMPRESSING_URL
     rset = json.loads(requests.get(COMPRESSING_URL).text)['rows']
     #print nowstr(),"DEBUG: there are",len(rset),"compressing jobs found"
@@ -280,7 +283,10 @@ def zombieHunt(now):
         n = rset[i]['value']
         if (now > n['compression-heartbeat']+60*2*ZOMBIE_HUNT_RATE_MIN):
             print nowstr(),'Found a zombie!  Reverting it to uncompressed state.'
+            print nowstr(),'now: ',now
+            print nowstr(),'last heartbeat: ',n['compression-heartbeat']
             revertCompression(n, now, dvr_fs)
+    print nowstr(), "Done Zombie Hunt"
 
 
 
@@ -338,7 +344,6 @@ time.sleep(50)
 urs = getUncompressedRecordingSet(None)
 now = calendar.timegm(time.gmtime())
 zombieTimestamp = now
-print nowstr(), "Performing Zombie Hunt"
 zombieHunt(zombieTimestamp)
 print nowstr(), "Entering main loop"
 while (True):
@@ -383,4 +388,4 @@ while (True):
 
     if (now > zombieTimestamp+60*ZOMBIE_HUNT_RATE_MIN):
         zombieTimestamp = now
-        zombieHunt(zombieHunt)
+        zombieHunt(zombieTimestamp)
