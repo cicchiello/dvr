@@ -1,0 +1,35 @@
+#!/bin/bash
+
+d=$(date)
+/bin/echo "${d}: recorderd-startup.bsh invoked; waiting for 10s..." >> /home/pi/logs/dvr-startup.log
+sleep 10
+
+who=$(whoami)
+d=$(date)
+host=$(hostname)
+echo "${d}: whoami returned \"${who}\"" >> /home/pi/logs/dvr-recorderd-startup.log
+echo "${d}: hostname returned \"${host}\"" >> /home/pi/logs/dvr-recorderd-startup.log
+d=$(date)
+echo "${d}: invoking recorderd.py..." >> /home/pi/logs/dvr-recorderd-startup.log
+python -u /home/pi/dvr/py/recorderd.py -ini /home/pi/dvr/py/config.ini -mode prod >> /home/pi/logs/dvr-recorderd.log
+d=$(date)
+echo "${d}: recorder.py shutdown" >> /home/pi/logs/dvr-recorderd-startup.log
+echo "${d}: sending email" >> /home/pi/logs/dvr-recorderd-startup.log
+
+echo "To: j.cicchiello@ieee.org" > /tmp/recorderd-msg.txt
+echo "${d}: To: j.cicchiello@ieee.org" >> /home/pi/logs/dvr-recorderd-startup.log
+echo "From: jcicchiello@ptd.net" >> /tmp/recorderd-msg.txt
+echo "${d}: From: jcicchiello@ptd.net" >> /home/pi/logs/dvr-recorderd-startup.log
+echo "Subject: recorderd.py has crashed!?!?!" >> /tmp/recorderd-msg.txt
+echo "${d}: Subject: recorderd.py has crashed!?!?!" >> /home/pi/logs/dvr-recorderd-startup.log
+echo "" >> /tmp/recorderd-msg.txt
+echo "${d}: " >> /home/pi/logs/dvr-recorderd-startup.log
+echo "recorderd.py has shutdown unexpectedly!" >> /tmp/recorderd-msg.txt
+echo "${d}: recorderd.py has shutdown unexpectedly!" >> /home/pi/logs/dvr-recorderd-startup.log
+echo "see /home/pi/logs/dvr-recorderd.log for info" >> /tmp/recorderd-msg.txt
+echo "${d}: see /home/pi/logs/dvr-recorderd.log for info" >> /home/pi/logs/dvr-recorderd-startup.log
+echo $(date) >> /tmp/recorderd-msg.txt
+echo "" >> /tmp/recorderd-msg.txt
+mail -s "recorderd.py has crashed!" j.cicchiello@ieee.org < /tmp/recorderd-msg.txt
+
+

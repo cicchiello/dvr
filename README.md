@@ -34,8 +34,8 @@
    # reboots
 ```
 
-   * setup mount point to filesystem used for recordings ("Passport" here)
-     (note1: "Passport" has to match the string for the drive returned by blkid)
+   * setup mount point to filesystem used for recordings ("mybook" here)
+     (note1: "mybook" has to match the string for the drive returned by blkid)
      (note2: ./init-exports.bsh will popup a message during Samba setup about
       enabling WINS -- I've been saying "No" to that.)
 
@@ -91,5 +91,14 @@
           mybook: use the same name as above on usbdrive-setup.bsh
 	        http://joes-mac-mini:5984 is the url to the CouchDb that contains the dvr database
 
+   * add startup invocation to /etc/rc.local
+       - you can invoke startup.bsh if everything should run on this host
+       - or one of compressd-startup.bsh or recorderd-startup.bsh as needed
+
+```
+   # near the end of /etc/rc.local, add this: 
+   /home/pi/dvr/bin/compressd-startup.bsh &
+```
+       
     Note: recordings can only be made after a subsequent reboot (recording daemon starts at boot)
 
