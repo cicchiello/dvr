@@ -110,7 +110,7 @@ uncompressedSetRefreshCnt = 0
 def fetchUncompressedRecordingSet():
     global uncompressedSetRefreshCnt
     uncompressedSetRefreshCnt = 0;
-    print "fetching uncompressed recording set with GET to: "+CAPTURED_URL
+    print nowstr(),"fetching uncompressed recording set with GET to: "+CAPTURED_URL
     return json.loads(requests.get(CAPTURED_URL).text)['rows']
 
     
@@ -334,6 +334,7 @@ def sysexception(t,e,tb):
     with open(filename, 'r') as infile:
         subprocess.Popen(['/usr/sbin/ssmtp', 'j.cicchiello@gmail.com'],
                          stdin=infile, stdout=sys.stdout, stderr=sys.stderr)
+    traceback.print_tb(tb)
     exit()
 
 

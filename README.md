@@ -48,6 +48,7 @@
    * download and build ffmpeg, following instructions here: https://pimylifeup.com/compiling-ffmpeg-raspberry-pi/
    * make sure that the CouchDb is setup; the url to it will be needed later
    * make sure the ulr to the CouchDb is accessible from this host (i.e. entry in /etc/hosts)
+   * make sure that ssmtp is setup since the scripts will send alerts as email messages (see ~/pitools/ssmtp-setup.bsh)
 
 ## Optional prerequisite:
    * Define a static ip address
