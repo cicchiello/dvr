@@ -14,8 +14,10 @@ import sys
 import configparser
 
 MAX_COMPRESSIONS=1
-HEARTBEAT_RATE_MIN=10
-ZOMBIE_HUNT_RATE_MIN=15
+
+HEARTBEAT_RATE_MIN=2
+# ZOMBIE_HUNT_RATE_MIN needs to be at least 2x HEARTBEAT_RATE_MIN
+ZOMBIE_HUNT_RATE_MIN=2*HEARTBEAT_RATE_MIN+1
 
 activeCompressions=[]
 
@@ -117,7 +119,7 @@ def getUncompressedRecordingSet(prev):
     resetIt = prev == None
     if (not resetIt):
         uncompressedSetRefreshCnt += 1
-        resetIt = (uncompressedSetRefreshCnt > 15)
+        resetIt = (uncompressedSetRefreshCnt > 5)
     if (resetIt):
         uncompressedSetRefreshCnt = 0
         return fetchUncompressedRecordingSet()
@@ -277,7 +279,7 @@ def zombieHunt(now):
     print nowstr(),"Making GET request to: "+COMPRESSING_URL
     rset = json.loads(requests.get(COMPRESSING_URL).text)['rows']
     #print nowstr(),"DEBUG: there are",len(rset),"compressing jobs found"
-    #print nowstr(),"DEBUG: heres rset:",json.dumps(rset,indent=3)
+    #print nowstr(),"DEBUG: here's rset:",json.dumps(rset,indent=3)
     for i in range(0, len(rset)):
         #print nowstr(),"DEBUG: here's rset[i]:",json.dumps(rset[i],indent=3)
         n = rset[i]['value']

@@ -23,8 +23,8 @@
 	 $id = $row['_id'];
          unset($row['_id']);
 
-	 // init cooking with timeout
-         setcookie('login_user', $_POST['uname'],
+	 // init cookie with timeout
+         setcookie("login_user", $_POST['uname'],
 	 	   time()+$sessionTimeout_s, '/');
 
          $couchUrl = $WriteDb.'/'.$id;
@@ -69,7 +69,7 @@
     }
   </style>
 
-<script>
+  <script>
     "use strict";
 
     function sleep(ms) {
@@ -77,6 +77,7 @@
     }
 
     async function success() {
+       await sleep(1000);
        open('./index.php',"_self");
     }
     

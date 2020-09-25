@@ -17,27 +17,18 @@ function deltaTimeStr($deltaTime)
 }
 
 
-function realFileSize($path)
-{
-    $fp = fopen($path,"r");
-    $pos = 0;
-    $size = 1073741824;
-    fseek($fp, 0, SEEK_SET);
-    while ($size > 1) {
-        fseek($fp, $size, SEEK_CUR);
-
-        if (fgetc($fp) === false) {
-            fseek($fp, -$size, SEEK_CUR);
-            $size = (int)($size / 2);
-        } else {
-            fseek($fp, -1, SEEK_CUR);
-            $pos += $size;
-        }
-    }
-
-    while (fgetc($fp) !== false)  $pos++;
-
-    return $pos;
+function realFileSize($file) {
+   $size = filesize($file);
+   if ($size <= 0)
+       if (!(strtoupper(substr(PHP_OS, 0, 3)) == 'WIN')) {
+           $size = trim(`stat -L -c%s "$file"`);
+       }
+       else{
+           $fsobj = new COM("Scripting.FileSystemObject");
+           $f = $fsobj->GetFile($file);
+           $size = $f->Size;
+       }
+   return $size;
 }
 
 
@@ -287,7 +278,7 @@ function renderEntryInfo($id)
       $result .= '	 </tr>';
       $showDbId = true;
    }
-
+   
    $fileExists = file_exists($file);
    $result .= '	 <tr>';
    if ($fileExists) {
@@ -435,6 +426,13 @@ function renderMenuItems($enabled,$refs)
 
 function renderMenu($enabled, $userName)
 {
+   $refs = array(
+      'live' => './live.php',
+      'library' => './recordings.php',
+      'recording' => './recordings.php',
+      'scheduled' => './schedules.php'
+   );
+   
    $result = '';
    $result .= renderProfileArea($userName);
    $result .= ' <div id="menuArea">';
@@ -442,7 +440,7 @@ function renderMenu($enabled, $userName)
    $result .= '     <img src="img/home.png" width="64" height="64" title="Home" style="padding:5px;" class="Btn">';
    $result .= '   </a>';
    $result .= '   <div id="menuItems" class="w3-show">';
-   $result .= renderMenuItems($enabled);
+   $result .= renderMenuItems($enabled,$refs);
    $result .= '   </div>';
    $result .= ' </div>';
    return $result;

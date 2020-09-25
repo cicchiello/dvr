@@ -34,7 +34,10 @@
    # reboots
 ```
 
-   * setup mount point to filesystem used for recordings ("mybook" here)
+   * setup mount point to filesystem used for recordings ("Passport" here)
+     (note1: "Passport" has to match the string for the drive returned by blkid)
+     (note2: ./init-exports.bsh will popup a message during Samba setup about
+      enabling WINS -- I've been saying "No" to that.)
 
 ```
    > cd pitools
@@ -42,6 +45,7 @@
    > sudo ./init-exports.bsh mybook # use the same name as on usbdrive-setup.bsh
 ```
 
+   * download and build ffmpeg, following instructions here: https://pimylifeup.com/compiling-ffmpeg-raspberry-pi/
    * make sure that the CouchDb is setup; the url to it will be needed later
    * make sure the ulr to the CouchDb is accessible from this host (i.e. entry in /etc/hosts)
 

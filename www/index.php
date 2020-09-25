@@ -38,8 +38,10 @@
          echo renderMainMenu($_COOKIE['login_user']);
        } else {
          echo 'onload="forceLogin()">';
+         echo '> ';
        }
-       ?>
+       //echo var_dump(isset($_COOKIE['login_user']));
+    ?>
 
     <div class="row box col-sm-4 w3-panel w3-card w3-white w3-round-large w3-display-bottomright">
       <?php
@@ -51,7 +53,7 @@
 	    echo '    <p>No HDHomeRun detected.</p>';
 	    echo '    <p>Please connect the HDHomeRun to your router and refresh the page.</p>';
 	    echo '    <p>HDHomeRun PRIME: Please remove the CableCard to allow detection to complete.</p>';
-	 }
+         }
 	 ?>
     </div>
     

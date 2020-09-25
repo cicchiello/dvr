@@ -25,13 +25,19 @@
   <body class="bg">
 
     <?php
+       if (isset($_COOKIE['login_user'])) {
+         echo 'onload="init()">';
+       } else {
+         echo 'onload="forceLogin()">';
+       }
+       
        $enabled = array(
           'live' => false,
           'library' => true,
           'recording' => false,
           'scheduled' => false
        );
-       echo renderMenu($enabled);
+       echo renderMenu($enabled, $_COOKIE['login_user']);
        ?>
 
     <div id="detail"
