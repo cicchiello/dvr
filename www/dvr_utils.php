@@ -18,16 +18,14 @@ function deltaTimeStr($deltaTime)
 
 
 function realFileSize($file) {
-   $size = filesize($file);
-   if ($size <= 0)
-       if (!(strtoupper(substr(PHP_OS, 0, 3)) == 'WIN')) {
-           $size = trim(`stat -L -c%s "$file"`);
-       }
-       else{
-           $fsobj = new COM("Scripting.FileSystemObject");
-           $f = $fsobj->GetFile($file);
-           $size = $f->Size;
-       }
+   if (!(strtoupper(substr(PHP_OS, 0, 3)) == 'WIN')) {
+       $size = trim(`stat -L -c%s "$file"`);
+   }
+   else{
+       $fsobj = new COM("Scripting.FileSystemObject");
+       $f = $fsobj->GetFile($file);
+       $size = $f->Size;
+   }
    return $size;
 }
 
