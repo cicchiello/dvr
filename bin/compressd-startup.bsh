@@ -15,11 +15,11 @@ python -u /home/pi/dvr/py/compressd.py -ini /home/pi/dvr/py/config.ini -mode pro
 d=$(date)
 echo "${d}: compressd.py shutdown" >> /home/pi/logs/dvr-compressd-startup.log
 echo "${d}: sending email" >> /home/pi/logs/dvr-compressd-startup.log
-echo "To: j.cicchiello@ieee.org" > /tmp/compressd-msg.txt
+#echo "To: j.cicchiello@ieee.org" > /tmp/compressd-msg.txt
 echo "${d}: To: j.cicchiello@ieee.org" >> /home/pi/logs/dvr-compressd-startup.log
-echo "From: jcicchiello@ptd.net" >> /tmp/compressd-msg.txt
+#echo "From: jcicchiello@ptd.net" >> /tmp/compressd-msg.txt
 echo "${d}: From: jcicchiello@ptd.net" >> /home/pi/logs/dvr-compressd-startup.log
-echo "Subject: compressd.py has crashed!?!?!" >> /tmp/compressd-msg.txt
+#echo "Subject: compressd.py has crashed!?!?!" >> /tmp/compressd-msg.txt
 echo "${d}: Subject: compressd.py has crashed!?!?!" >> /home/pi/logs/dvr-compressd-startup.log
 echo "" >> /tmp/compressd-msg.txt
 echo "${d}: " >> /home/pi/logs/dvr-compressd-startup.log
