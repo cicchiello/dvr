@@ -81,6 +81,16 @@
    > sudo ./init-dvr.bsh mybook http://joes-mac-mini:5984
 ```
 
+   * Setup required python components
+
+```
+   > sudo apt-get install python-dev python3-dev
+   > cd ~ && mkdir pip && cd pip && curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py && python get-pip.py
+   > sudo python -m pip install requests psutil configparser
+```
+
+   * Setup directories (or symlinks to directories) for all of: ~/dvr/py/{raw|compressed|library|trashcan}
+   
    * Setup ffmpeg (used for conversion to h264 formats, effectively compressing by 2x-3x)
    
 ```
