@@ -108,29 +108,25 @@ def selectEarliest(resultSet,now):
     return None if mini == -1 else resultSet[mini]['value']
 
 
-uncompressedSetRefreshCnt = 0
+def fetchActiveCompressionsResultSet():
+    #print nowstr(),"INFO: Fetching active compressions with GET to: "+COMPRESSING_URL
+    responseStr = requests.get(COMPRESSING_URL).text
+    #print nowstr(),"response: "+responseStr
+    rset = json.loads(responseStr)['rows']
+    actives = []
+    for i in range(0, len(rset)):
+        n = rset[i]['value']
+        actives.append({'proc':n['proc'],'record':n,'heartbeat':n['compression-heartbeat']})
+    return actives
+
+    
 def fetchUncompressedRecordingSet():
-    global uncompressedSetRefreshCnt
-    uncompressedSetRefreshCnt = 0;
     print nowstr(),"fetching uncompressed recording set with GET to: "+CAPTURED_URL
     responseStr = requests.get(CAPTURED_URL).text
     print nowstr(),"response: "+responseStr
     return json.loads(responseStr)['rows']
 
     
-def getUncompressedRecordingSet(prev):
-    global uncompressedSetRefreshCnt
-    resetIt = prev == None
-    if (not resetIt):
-        uncompressedSetRefreshCnt += 1
-        resetIt = (uncompressedSetRefreshCnt > 5)
-    if (resetIt):
-        uncompressedSetRefreshCnt = 0
-        return fetchUncompressedRecordingSet()
-    else:
-        return prev
-
-
 def cleanDescription(d):
     cleanedDescription = ''
     legalchars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-., '
@@ -212,7 +208,7 @@ def heartbeat(n, now):
     #print nowstr(),"Updating the db heartbeat"
     print nowstr(),"Here's the heartbeat update I'm going to make:", url, json.dumps(n,indent=3)
     r = requests.put(url, auth=DbWriteAuth, json=n)
-    print nowstr(),"Here's the reply: ", json.dumps(r.json(),indent=3)
+    #print nowstr(),"Here's the reply: ", json.dumps(r.json(),indent=3)
     n['_id'] = id
     if ('ok' in r.json()):
         print nowstr(),"Success"
@@ -230,8 +226,6 @@ def preexec_fn():
 
     
 def compress(n, now, fs):
-    global activeCompressions
-    
     id = n['_id']
     url = POST_URL+'/'+id
     del n['_id']
@@ -247,16 +241,10 @@ def compress(n, now, fs):
                   '-vf','yadif=1','-vf','scale=-1:720','-c:v','libx264','-y',tmpfile];
         print nowstr(),'INFO: compression cmd to issue: ',cmdArr
         proc = subprocess.Popen(cmdArr, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=False, preexec_fn=preexec_fn)
-        
+        n['proc'] = proc.pid
         print nowstr(),"Here's the db update I'm going to make for id:", id, json.dumps(n,indent=3)
         r = requests.put(url, auth=DbWriteAuth, json=n)
         print nowstr(),("Success" if 'ok' in r.json() else "Failed: ",json.dumps(r.json(),indent=3))
-        if ('ok' in r.json()):
-            print nowstr(),"Here's the reply: ", json.dumps(r.json(),indent=3)
-            n['_rev'] = r.json()['rev']
-            n['_id'] = id
-            activeCompressions.append({'proc':proc,'record':n,'heartbeat':now})
-            return proc
     else:
         print nowstr(),"File not found for compression; marking as compressed and skipping"
         n.pop('compression-start-timestamp', None)
@@ -273,12 +261,9 @@ def handleUncompressedRecordingSet(rs, now, fs):
     #print json.dumps(rs,indent=3)
     n = selectEarliest(rs, now)
     if (n != None):
-        if (len(activeCompressions) < MAX_COMPRESSIONS):
-            print nowstr(),'INFO: Found the oldest uncompressed recording; starting compression now'
-            proc = compress(n, now, fs)
-            rs = fetchUncompressedRecordingSet()
-        else:
-            print nowstr(),"INFO: skipping compression opportunity since it's already running"
+        print nowstr(),'INFO: Found the oldest uncompressed recording; starting compression now'
+        proc = compress(n, now, fs)
+        rs = fetchUncompressedRecordingSet()
     return rs
 
 
@@ -292,7 +277,7 @@ def zombieHunt(now):
     for i in range(0, len(rset)):
         #print nowstr(),"DEBUG: here's rset[i]:",json.dumps(rset[i],indent=3)
         n = rset[i]['value']
-        if (now > n['compression-heartbeat']+60*2*ZOMBIE_HUNT_RATE_MIN):
+        if ((not psutil.pid_exists(n['prod'])) and (now > n['compression-heartbeat']+60*2*ZOMBIE_HUNT_RATE_MIN)):
             print nowstr(),'Found a zombie!  Reverting it to uncompressed state.'
             print nowstr(),'now: ',now
             print nowstr(),'last heartbeat: ',n['compression-heartbeat']
@@ -302,7 +287,7 @@ def zombieHunt(now):
 
 
 def sysexception(t,e,tb):
-    progname = "compressd"
+    progname = "compress"
     
     print nowstr(),'sysexception called; preparing an email...'
     filename = "/tmp/"+progname+"-msg.txt"
@@ -351,54 +336,49 @@ sys.excepthook = sysexception
 
 
 # Let's wait a bit before starting anything that might need the db, in case it's not available yet
-time.sleep(50)
+time.sleep(10)
 
-urs = getUncompressedRecordingSet(None)
+urs = fetchUncompressedRecordingSet()
 now = calendar.timegm(time.gmtime())
 zombieTimestamp = now
 zombieHunt(zombieTimestamp)
-print nowstr(), "Entering main loop"
-while (True):
+
+now = calendar.timegm(time.gmtime())
+#print nowstr(), "now:", now
+
+#print nowstr(),"INFO: Fetching the list of active compression jobs..."
+activeCompressions = fetchActiveCompressionsResultSet()
+#print nowstr(),"INFO: ...found",len(activeCompressions)
+if (len(activeCompressions) < MAX_COMPRESSIONS):
+    print nowstr(),"INFO: Looking for a captured recording to compress..."
+    urs = handleUncompressedRecordingSet(urs, now, dvr_fs)
+    print nowstr(),"INFO: Refetching the list of active compression jobs..."
+    activeCompressions = fetchActiveCompressionsResultSet()
+else:
+    print nowstr(),"INFO: No compressions can be started while MAX_COMPRESSIONS already running"
+
+print nowstr(),"INFO: Considering active jobs"
+for compression in activeCompressions:
+    #print "considering: ",compression
+    n = compression['record']
+    id = n['_id']
     now = calendar.timegm(time.gmtime())
-    #print nowstr(), "now:", now
-    #print ""
-
-    if (len(activeCompressions) < MAX_COMPRESSIONS):
-        #print nowstr(),"looking for newly captured recording to compress..."
-        urs = handleUncompressedRecordingSet(urs, now, dvr_fs)
-        #print ""
-
-    #print nowstr(),"Sleeping..."
-    time.sleep(50)
-
-    newCompressions = []
-    for compression in activeCompressions:
-        proc = compression['proc']
-        n = compression['record']
-        id = n['_id']
-        now = calendar.timegm(time.gmtime())
-        if (proc.poll() != None):
-            print nowstr(),'detected subprocess',proc.pid,'completion...'
-            if (proc.returncode == 0):
-                print nowstr(),'The compression job for',id,'completed successfully'
-                closeCompression(n, now, dvr_fs);
-            else:
-                print nowstr(),'The compression job for',id,'failed'
-                print nowstr(),'the subprocess returncode is',proc.returncode
-                revertCompression(n, now, dvr_fs);
+    pid = compression['proc']
+    if (psutil.pid_exists(pid)):
+        if (now > compression['heartbeat']+60*HEARTBEAT_RATE_MIN):
+            # annotate the db record with a heartbeat so that future runs can
+            # identify zombie jobs
+            n = heartbeat(n, now)
+            compression['heartbeat'] = n['compression-heartbeat']
+            compression['record'] = n
+    else:
+        print nowstr(),'INFO: detected subprocess',pid,'completion...'
+        print "NEED A WAY TO DETECT FAILURE!"
+        success=True
+        if (success):
+            closeCompression(n, now, dvr_fs);
         else:
-            if (now > compression['heartbeat']+60*HEARTBEAT_RATE_MIN):
-                # annotate the db record with a heartbeat so that future runs can
-                # identify zombie jobs
-                n = heartbeat(n, now)
-                compression['heartbeat'] = n['compression-heartbeat']
-                compression['record'] = n
-            newCompressions.append(compression)
-    activeCompressions = newCompressions
+            print nowstr(),'The compression job for',pid,'failed'
+            print nowstr(),'the subprocess returncode is',proc.returncode
+            revertCompression(n, now, dvr_fs);
     
-    urs = getUncompressedRecordingSet(urs)
-    #print nowstr(), "Uncompressed recording set length: ", len(urs)
-
-    if (now > zombieTimestamp+60*ZOMBIE_HUNT_RATE_MIN):
-        zombieTimestamp = now
-        zombieHunt(zombieTimestamp)
