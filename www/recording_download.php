@@ -1,4 +1,15 @@
 <!DOCTYPE html>
+
+<?php
+    // intentionally place this before the html tag
+
+    // Uncomment to see php errors
+    ini_set('display_errors', 1);
+    ini_set('display_startup_errors', 1);
+    error_reporting(E_ALL);
+
+  ?>
+
 <html>
   
   <head>
@@ -39,10 +50,11 @@
     <?php
        $enabled = array(
           'live' => false,
-          'recordings' => true,
+          'library' => true,
+          'recording' => false,
           'scheduled' => false
        );
-       echo renderMenu($enabled);
+       echo renderMenu($enabled, $_COOKIE['login_user']);
        ?>
     
     <div class="w3-container w3-display-middle">

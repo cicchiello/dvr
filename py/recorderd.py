@@ -16,27 +16,26 @@ from copy import deepcopy
 
 ZOMBIE_HUNT_RATE_MIN=60
 
-
 def usage():
-    print "Usage:",sys.argv[0]," -ini <ini-file> [-mode {prod|dev}]"
-    print ""
+    print("Usage: %s -ini <ini-file> [-mode {prod|dev}]" % (sys.argv[0]))
+    print("")
     exit()
 
 def nowstr():
-    fmt = 'INFO: %Y-%b-%d %H:%M:%S:'
-    return datetime.datetime.today().strftime('INFO: %Y-%b-%d %H:%M:%S :')
+    fmt = '%Y-%b-%d %H:%M:%S'
+    return datetime.datetime.today().strftime('%Y-%b-%d %H:%M:%S')
 
 if ((len(sys.argv) < 3) or \
     ((len(sys.argv) > 3) and (len(sys.argv) < 5))):
-    print "ERROR: wrong number of arguments; expected 2 or 4"
+    print("ERROR: wrong number of arguments; expected 2 or 4")
     usage()
 
 if (sys.argv[1] != "-ini"):
-    print "ERROR: expected '-ini' for 2nd argument"
+    print("ERROR: expected '-ini' for 2nd argument")
     usage()
 
 if ((len(sys.argv) > 3) and (sys.argv[3] != "-mode")):
-    print "ERROR: expected '-mode' for 4th argument"
+    print("ERROR: expected '-mode' for 4th argument")
     usage()
 
 dvr_fs = os.path.dirname(sys.argv[0])
@@ -45,17 +44,17 @@ mode = "prod" if (len(sys.argv) < 4) else sys.argv[4]
 config = configparser.ConfigParser()
 
 if (not os.path.isfile(iniFilename)):
-    print "ERROR:",iniFilename,"file doesn't exist"
+    print("ERROR:",iniFilename,"file doesn't exist")
     usage()
     
 config.read(iniFilename)
 
 if (not os.path.isdir(dvr_fs+"/raw")):
-    print "ERROR: recording location doesn't exists: ",(dvr_fs+"/raw")
+    print("ERROR: recording location doesn't exists: ",(dvr_fs+"/raw"))
     usage()
 
 if (not (mode in config)):
-    print "ERROR: invalid config file; expected",mode,"section"
+    print("ERROR: invalid config file; expected",mode,"section")
     usage()
     
 DbBase = config[mode]['DbBase']
@@ -64,13 +63,13 @@ DbPswd = config[mode]['DbPswd']
 Db = config[mode]['Db']
 DbWriteAuth = None if (not (DbKey and DbPswd)) else (DbKey,DbPswd)
     
-print nowstr(), "Mode:", mode
-print nowstr(), "Using dvr-filesystem root:", dvr_fs
-print nowstr(), "DbBase:", DbBase
-print nowstr(), "DbKey:", DbKey
-print nowstr(), "DbPswd:", DbPswd
-print nowstr(), "Db:", Db
-print nowstr(), "DbWriteAuth:", DbWriteAuth
+print("%s: Mode: %s" % (nowstr(), mode))
+print("%s: Using dvr-filesystem root: %s" % (nowstr(), dvr_fs))
+print("%s: DbBase: %s" % (nowstr(), DbBase))
+print("%s: DbKey: %s" % (nowstr(), DbKey))
+print("%s: DbPswd: %s" % (nowstr(), DbPswd))
+print("%s: Db: %s" % (nowstr(), Db))
+print("%s: DbWriteAuth: %s" % (nowstr(), DbWriteAuth))
 
 ALL_OBJS_URL = DbBase+'/'+Db+'/_all_docs'
 BULK_DOCS_URL = DbBase+'/'+Db+'/_bulk_docs'
@@ -106,7 +105,6 @@ def selectNextMissedEnd(resultSet,now):
     earliest = 9999999999
     mini = -1
     for i in range(0, len(resultSet['rows'])):
-        #print "row[",i,"]:",json.dumps(v['rows'][i]['value'],indent=3)
         r = resultSet['rows'][i]['value']
         stime = int(r['record-start'])
         etime = int(r['record-end'])
@@ -122,13 +120,11 @@ def selectNextMissedStart(resultSet,now):
     
     earliest = 9999999999
     mini = -1
-    #print nowstr(),"DEBUG: resultSet['rows']:",json.dumps(resultSet['rows'],indent=3)
     for i in range(0, len(resultSet['rows'])):
         r = resultSet['rows'][i]['value']
         stime = int(r['record-start'])
         etime = int(r['record-end'])
         if (stime < now and now < etime and stime < earliest):
-            #print nowstr(),"DEBUG: tentatively choosing",i
             mini = i
             earliest = stime
     return None if mini == -1 else resultSet['rows'][mini]['value']
@@ -141,7 +137,6 @@ def selectNextStart(resultSet,now):
     earliest = 9999999999
     mini = -1
     for i in range(0, len(resultSet['rows'])):
-        #print "row[",i,"]:",json.dumps(v['rows'][i]['value'],indent=3)
         r = resultSet['rows'][i]['value']
         stime = int(r['record-start'])
         if ((stime > now) and (stime < now + 60) and (stime < earliest)):
@@ -157,7 +152,6 @@ def selectNextStop(resultSet,now):
     earliest = 9999999999
     mini = -1
     for i in range(0, len(resultSet['rows'])):
-        #print "row[",i,"]:",json.dumps(v['rows'][i]['value'],indent=3)
         r = resultSet['rows'][i]['value']
         stime = int(r['record-end'])
         if ((stime > now) and (stime < now + 60) and (stime < earliest)):
@@ -201,16 +195,14 @@ def getCapturingSet(prev):
 def handleMissedSchedules(rs, now):
     missedCompletely = selectNextMissedEnd(rs, now)
     while (missedCompletely != None):
-        print nowstr(),"INFO: Found one that I missed completely!"
+        print("INFO(%s): Found one that I missed completely!" % (nowstr()))
         missedCompletely['type'] = 'error'
         missedCompletely['errmsg'] = 'schedule missed completely'
         missedCompletely['missed-timestamp'] = str(now)
         id = missedCompletely['_id']
         del missedCompletely['_id']
-        #print "Here's the update I'm going to make:", json.dumps(missedCompletely,indent=3)
         url = POST_URL+'/'+id
         r = requests.put(url, auth=DbWriteAuth, json=missedCompletely)
-        #print r.json()
         rs = fetchScheduledSet()
         missedCompletely = selectNextMissedEnd(rs,now)
     return rs
@@ -220,13 +212,12 @@ def invoke(n, fs):
     id = n['_id']
     url = n['url']
     cmdArr = ['/usr/bin/curl','-X','GET',url,'-i','-o',fs+'/raw/'+id+'.mp4'];
-    print nowstr(),"INFO: cmd: ",cmdArr
+    print("INFO(%s): cmd: %s" % (nowstr(), cmdArr))
     return subprocess.Popen(cmdArr, shell=False)
 
 def startCapture(n, now, fs):
     global activeCaptures
     proc = invoke(n, fs)
-    #print nowstr(),"INFO: returned from invoke"
     id = n['_id']
     n['type'] = 'capturing'
     n['capture-start-timestamp'] = now
@@ -234,22 +225,19 @@ def startCapture(n, now, fs):
     n['pid'] = proc.pid
     n['file'] = 'raw/'+id+'.mp4'
     del n['_id']
-    print nowstr(),"Here's the update I'm going to make:", json.dumps(n,indent=3)
+    print("INFO(%s): Here's the update I'm going to make: %s" % (nowstr(), json.dumps(n,indent=3)))
     url = POST_URL+'/'+id
     r = requests.put(url, auth=DbWriteAuth, json=n)
-    #print nowstr(),("Success" if 'ok' in r.json() else "Failed: "+r.json())
     n['_id'] = id
     n['_rev'] = r.json()['rev']
     activeCaptures.append({'pid':proc.pid,'record':deepcopy(n),'heartbeat':now})
-    #print nowstr(),"DEBUB: activeCaptures:", json.dumps(activeCaptures,indent=3)
 
 
 def stopCapture(s, now):
     global activeCaptures
 
-    print nowstr(),"DEBUG: completed capture of:", json.dumps(s,indent=3)
-    print nowstr(),"DEBUG: activeCaptures before removing completed capture:", \
-        json.dumps(activeCaptures, indent=3)
+    print("DEBUG(%s): completed capture of: %s" % (nowstr(), json.dumps(s,indent=3)))
+    print("DEBUG(%s): activeCaptures before removing completed capture: %s" % (nowstr(), json.dumps(activeCaptures,indent=3)))
 
     newActiveCaptures = []
     for x in activeCaptures:
@@ -263,40 +251,32 @@ def stopCapture(s, now):
         else:
             newActiveCaptures.append(x)
     activeCaptures = newActiveCaptures
-    print nowstr(),"DEBUG: activeCaptures after removing completed capture:", \
-        json.dumps(activeCaptures, indent=3)
-    print nowstr(),"DEBUG: s after shutting down process:", json.dumps(s, indent=3)
+    print("DEBUG(%s): activeCaptures after removing completed capture: %s" % (nowstr(), json.dumps(activeCaptures, indent=3)))
+    print("DEBUG(%s): s after shutting down process: %s" % (nowstr(), json.dumps(s, indent=3)))
             
     id = s['_id']
-    print nowstr(), "TRACE: 1"
     hasHeartbeat = 'capture-heartbeat' in s
-    print nowstr(), "TRACE: 2"
     s['capture-stop-timestamp'] = s['capture-heartbeat'] if hasHeartbeat else now
-    print nowstr(), "TRACE: 3"
     del s['pid']
-    print nowstr(), "TRACE: 4"
     del s['_id']
-    print nowstr(), "TRACE: 5"
     s.pop('capture-heartbeat', None)
-    print nowstr(), "TRACE: 6"
     s['type'] = 'recording'
-    
-    print nowstr(),"Here's the update I'm going to make:", json.dumps(s,indent=3)
+
+    print("INFO(%s): Here's the update I'm going to make: %s" % (nowstr(), json.dumps(s,indent=3)))
     url = POST_URL+'/'+id
     r = requests.put(url, auth=DbWriteAuth, json=s)
     #print r.json()
     
     dst = dvr_fs+'/library/'+cleanDescription(s['description'])+'.mp4'
     src = dvr_fs+'/'+s['file']
-    print nowstr(),"DEBUG: Here's the symlink to establish:",src," ",dst
+    print("DEBUG(%s): Here's the symlink to establish: %s->%s" % (nowstr(), dst, src))
     os.symlink(src, dst)
 
     
 def handleLateStarts(rs, now, fs):
-    #print json.dumps(rs,indent=3)
     late = selectNextMissedStart(rs, now)
     while (late != None):
-        print nowstr(),"INFO: Found a schedule that should have started already!  Starting now."
+        print("INFO(%s): Found a schedule that should have started already!  Starting now." % (nowstr()))
         startCapture(late, now, fs)
         rs = fetchScheduledSet()
         late = selectNextMissedStart(rs, now)
@@ -304,10 +284,9 @@ def handleLateStarts(rs, now, fs):
 
 
 def handleNextStart(rs, now, fs):
-    #print json.dumps(rs,indent=3)
     n = selectNextStart(rs, now)
     while (n != None):
-        print nowstr(),"INFO: Found a schedule due to start within a minute; starting it now"
+        print("INFO(%s): Found a schedule due to start within a minute; starting it now" % (nowstr()))
         startCapture(n, now, fs)
         rs = fetchScheduledSet()
         n = selectNextStart(rs, now)
@@ -317,7 +296,7 @@ def handleNextStart(rs, now, fs):
 def handleNextStop(crs, now):
     s = selectNextStop(crs, now)
     while (s != None):
-        print nowstr(),"INFO: Found an active capture that should be stopped:", json.dumps(s,indent=3)
+        print("INFO(%s): Found an active capture that should be stopped: %s" % (nowstr(), json.dumps(s,indent=3)))
         stopCapture(s, now)
         crs = fetchCapturingSet()
         s = selectNextStop(crs, now)
@@ -330,10 +309,8 @@ def heartbeat(n, now):
     url = POST_URL+'/'+id
     del n['_id']
     n['capture-heartbeat'] = now
-    print nowstr(),"DEBUG: Updating the db heartbeat"
-    #print nowstr(),"DEBUG: Here's the update I'm going to make:", json.dumps(n,indent=3)
+    print("DEBUG(%s): Updating the db heartbeat" % (nowstr()))
     r = requests.put(url, auth=DbWriteAuth, json=n)
-    #print nowstr(),("Success" if 'ok' in r.json() else "Failed: "+r.json())
     n['_id'] = id
     n['_rev'] = r.json()['rev']
     return n
@@ -341,11 +318,10 @@ def heartbeat(n, now):
 
 
 def zombieHunt(now):
-    print nowstr(),"On a zombie hunt!"
-    print nowstr(),"Here's the url: "+CAPTURING_URL
+    print("INFO(%s): On a zombie hunt!" % (nowstr()))
+    print("INFO(%s): Here's the url: %s" % (nowstr(), CAPTURING_URL))
     rset = json.loads(requests.get(CAPTURING_URL).text)['rows']
-    print nowstr(),"DEBUG: there are",len(rset),"capture jobs found"
-    #print nowstr(),"DEBUG: here's rset:",json.dumps(rset,indent=3)
+    print("DEBUG(%s): there are %d capture jobs found" % (nowstr(), len(rset)))
     for i in range(0, len(rset)):
         n = rset[i]['value']
         hasHeartbeat = 'capture-heartbeat' in n
@@ -360,54 +336,52 @@ def zombieHunt(now):
             n.pop('capture-heartbeat', None)
             n['type'] = 'error';
             n['errmsg']  = 'identified as capture-zombie';
-            print nowstr(),"Found a zombie!  Here's the update I'm going to make:", \
-                json.dumps(n,indent=3)
+            print("INFO(%s): Found a zombie!  Here's the update I'm going to make: %s" % (nowstr(), json.dumps(n,indent=3)))
             r = requests.put(url, auth=DbWriteAuth, json=n)
-            #print nowstr(),("Success" if 'ok' in r.json() else "Failed: "+r.json())
 
 
             
 def sysexception(t,e,tb):
     progname = "recorderd"
-    
-    print nowstr(),'sysexception called; preparing an email...'
+
+    print("ERROR(%s): sysexception called; preparing an email..." % (nowstr()))
     filename = "/tmp/"+progname+"-msg.txt"
     f = open(filename, "w", 0)
     f.write("To: j.cicchiello@ieee.org\n")
-    print nowstr(), "To: j.cicchiello@ieee.org"
+    print("INFO(%s): To: j.cicchiello@ieee.org" % (nowstr()))
     f.write("From: jcicchiello@ptd.net\n")
-    print nowstr(), "From: jcicchiello@ptd.net"
+    print("INFO(%s): From: jcicchiello@ptd.net" % (nowstr()))
     f.write("Subject: "+progname+".py has crashed!?!?\n")
-    print nowstr(), "Subject: "+progname+".py has crashed!?!?"
+    print("INFO(%s): Subject: %s.py has crashed!?!?!" % (nowstr(), progname))
     f.write("\n")
-    print nowstr(), ""
+    print("INFO(%s): " % (nowstr()))
     f.write(progname+".py has shutdown unexpectedly!\n")
-    print nowstr(), progname+".py has shutdown unexpectedly!"
+    print("INFO(%s): %s.py has shutdown unexpectedly!" % (nowstr(), progname))
     f.write("\n")
-    print nowstr(), ""
+    print("INFO(%s): " % (nowstr()))
     f.write("type 1: ")
-    print nowstr(), "type 1: "+str(t)
+    print("INFO(%s): type 1: %s" % (nowstr(), str(t)))
     f.write(str(t))
     f.write("\n")
     f.write("type 2: ")
-    print nowstr(), "type 2: "+t.__name__
+    print("INFO(%s): type 2: %s" % (nowstr(), t.__name__))
     f.write(t.__name__)
     f.write("\n")
     f.write("exception: ")
-    print nowstr(), "exception: "+str(e)
+    print("INFO(%s): exception: %s" % (nowstr(), str(e)))
     f.write(str(e))
     f.write("\n")
-    print nowstr(), ""
+    print("INFO(%s): " % (nowstr()))
     f.write("traceback: ")
-    print nowstr(), "traceback: "+str(tb)
+    print("INFO(%s): traceback: %s" % (nowstr(), str(tb)))
     f.write(str(tb))
     f.write("\n")
     f.write("traceback.print_exception(etype,value,tb): ")
     tb.print_exception(t,e,tb,f);
     f.write("\n")
-    print nowstr(), ""
+    print("INFO(%s): " % (nowstr()))
     f.write("\n")
-    print nowstr(), ""
+    print("INFO(%s): " % (nowstr()))
     f.close()
     with open(filename, 'r') as infile:
         subprocess.Popen(['/usr/sbin/ssmtp', 'j.cicchiello@gmail.com'],
@@ -423,38 +397,22 @@ time.sleep(50)
 
 now = calendar.timegm(time.gmtime())
 zombieTimestamp = now            
-print nowstr(), "Performing Zombie Hunt"
+print("INFO(%s): Performing Zombie Hunt" % (nowstr()))
 zombieHunt(zombieTimestamp)
 
 srs = getScheduledSet(None)
 crs = getCapturingSet([])
-print nowstr(), "Entering main loop"
+print("INFO(%s): Entering main loop" % (nowstr()))
 while (True):
     now = calendar.timegm(time.gmtime())
-    #print nowstr(), "now:", now
-    #print ""
-
-    #print nowstr(),"looking for completely missed..."
     srs = handleMissedSchedules(srs, now)
-    #print ""
-
-    #print nowstr(),"looking for late..."
     srs = handleLateStarts(srs, now, dvr_fs)
-    #print ""
-    
-    #print nowstr(),"looking for ones that should start now..."
     srs = handleNextStart(srs, now, dvr_fs)
-    #print ""
-
-    #print nowstr(),"looking for ones that should stop now..."
     crs = handleNextStop(crs, now)
-    #print ""
 
-    #print nowstr(),"considering heartbeats..."
     now = calendar.timegm(time.gmtime())
     newCaptures = []
     for capture in activeCaptures:
-        #print nowstr(),"DEBUG: capture:",json.dumps(capture,indent=3)
         n = capture['record'];
         hb = capture['heartbeat'];
         if (now > hb+60):
@@ -467,8 +425,6 @@ while (True):
     time.sleep(50)
     srs = getScheduledSet(srs)
     crs = getCapturingSet(crs)
-    #print "srs: ", srs
-    #print "crs: ", crs
 
     if (now > zombieTimestamp+60*ZOMBIE_HUNT_RATE_MIN):
         zombieTimestamp = now

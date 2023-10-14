@@ -1,4 +1,13 @@
 <!DOCTYPE html>
+<?php
+    // intentionally place this before the html tag
+
+    // Uncomment to see php errors
+    ini_set('display_errors', 1);
+    ini_set('display_startup_errors', 1);
+    error_reporting(E_ALL);
+  ?>
+
 <html>
   
   <head>
@@ -50,11 +59,11 @@
     
        ?>
     
-    <div style="height:90%; width:50%; padding:20px"
-	 class="w3-white w3-round-large w3-panel w3-display-bottomright">
+    <div style="height:90%; width:60%; padding:10px; margin-right:40px"
+	 class="w3-white w3-round-large w3-panel w3-display-right">
 
-      <iframe id="recordingsFrame" src="./recordingTbl.php"
-	      height="100%" width="100%" frameborder="1" style="float:right; z-index:999">
+      <iframe id="recordingsFrame" src="./recordingTbl.php" frameBorder="0"
+	      height="100%" width="100%" style="float:right; z-index:999">
 	<p>Your browser does not support iframes.</p>
       </iframe>
 

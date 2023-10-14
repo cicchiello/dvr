@@ -1,4 +1,15 @@
 <!DOCTYPE html>
+
+<?php
+    // intentionally place this before the html tag
+
+    // Uncomment to see php errors
+    ini_set('display_errors', 1);
+    ini_set('display_startup_errors', 1);
+    error_reporting(E_ALL);
+
+  ?>
+
 <html>
   
   <head>
@@ -37,12 +48,12 @@
           'recording' => false,
           'scheduled' => false
        );
-       echo renderMenu($enabled);
+       echo renderMenu($enabled, $_COOKIE['login_user']);
        ?>
 
     <div id="detail"
 	 class="w3-container w3-display-middle w3-panel w3-card w3-white w3-padding-16 w3-round-large">
-      <form id="delRecording" action="./commit_del.php" method="GET">
+      <form id="delRecording" action="./commitRecDel.php" method="GET">
 
 	<fieldset>
 	  <legend>Really Delete?</legend>

@@ -29,7 +29,7 @@
     }
 
     async function success() {
-       await sleep(6000);
+       await sleep(2000);
        open('./login.php',"_self");
     }
     

@@ -1,4 +1,15 @@
 <!DOCTYPE html>
+
+<?php
+    // intentionally place this before the html tag
+
+    // Uncomment to see php errors
+    ini_set('display_errors', 1);
+    ini_set('display_startup_errors', 1);
+    error_reporting(E_ALL);
+
+  ?>
+
 <html>
   
   <head>
@@ -41,7 +52,7 @@
           'recording' => false,
           'scheduled' => false
        );
-       echo renderMenu($enabled);
+       echo renderMenu($enabled, $_COOKIE['login_user']);
 	
        $id = $_GET["id"];
 	   
@@ -55,26 +66,19 @@
        unset($detail['_id']);
        $detail['type'] = 'deleted-'.$detail['type'];
        $detail['delete-timestamp'] = date_timestamp_get(date_create());
-	
-       $dataStr = json_encode($detail);
+       $link = $detail['file'];
 
-       $ch = curl_init($couchUrl);
-       curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "PUT");
-       curl_setopt($ch, CURLOPT_POSTFIELDS, $dataStr);
-       curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-       curl_setopt($ch, CURLOPT_HTTPHEADER, array(
-	  'Content-Type: application/json;charset=UTF-8',
-	  'Content-Length: '.strlen($dataStr))
-       );
-       $resultStr = curl_exec($ch);
-       $result = json_decode($resultStr, true);
+       $result = putDb($couchUrl, $detail);
 
-       if ($result['ok']) {
-	  echo "Success";
+       $success = $result['ok'];
+       if ($success) {
+           echo "Success";
+           $file = trim(`readlink -f "$link"`);
+           unlink($file);
+           unlink($link);
        } else {
 	  echo "Error!";
        }
-	
     ?>
 	
     <div class="w3-container w3-display-middle">

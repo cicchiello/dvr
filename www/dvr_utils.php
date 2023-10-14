@@ -19,25 +19,8 @@ function deltaTimeStr($deltaTime)
 
 function realFileSize($path)
 {
-    $fp = fopen($path,"r");
-    $pos = 0;
-    $size = 1073741824;
-    fseek($fp, 0, SEEK_SET);
-    while ($size > 1) {
-        fseek($fp, $size, SEEK_CUR);
-
-        if (fgetc($fp) === false) {
-            fseek($fp, -$size, SEEK_CUR);
-            $size = (int)($size / 2);
-        } else {
-            fseek($fp, -1, SEEK_CUR);
-            $pos += $size;
-        }
-    }
-
-    while (fgetc($fp) !== false)  $pos++;
-
-    return $pos;
+    $size = trim(`stat -L -c%s '$path'`);
+    return $size;
 }
 
 
@@ -51,6 +34,7 @@ function realFileSize($path)
 function readableSize($bytes)
 {
     $bytes = floatval($bytes);
+    $result = $bytes;
     $arBytes = array(
         0 => array(
 	    "UNIT" => "TB",
@@ -196,7 +180,6 @@ function renderEntryInfo($id)
    $detailUrl = $DbBase.'/'.$Db.'/'.$id;
 
    $detail = json_decode(file_get_contents($detailUrl), true);
-       
    $channel = $detail['channel'];
    $description = $detail['description'];
    $recordStart = $detail['record-start'];
@@ -252,7 +235,7 @@ function renderEntryInfo($id)
    $result .= '	   </td>';
    $result .= '	 </tr>';
 
-   $startDiscrepancy = abs($recordStart - $actualStart) > 60;
+   $startDiscrepancy = abs($recordStart - $actualStart) > 120;
    $result .= '	 <tr>';
    $result .= '	   <td>'.($startDiscrepancy ? 'Scheduled Start':'Start Time').':</td>';
    $result .= '	   <td colspan="2">';
@@ -269,25 +252,36 @@ function renderEntryInfo($id)
       $showDbId = true;
    }
 
-   $scheduledDuration = deltaTimeStr($recordEnd-$recordStart);
-   $actualDuration = deltaTimeStr($actualEnd-$actualStart);
-   $durationDiscrepancy = abs($scheduledDuration - $actualDuration) > 60;
+   $scheduledDurationStr = deltaTimeStr($recordEnd-$recordStart);
+   $scheduledDuration = $recordEnd-$recordStart;
+   $actualDurationStr = deltaTimeStr($actualEnd-$actualStart);
+   $actualDuration = $actualEnd-$actualStart;
+   $durationDiscrepancy = abs($scheduledDuration - $actualDuration) > 120;
    $result .= '	 <tr>';
    $result .= '	   <td>'.($durationDiscrepancy ? 'Scheduled Duration':'Duration').':</td>';
    $result .= '	   <td colspan="2">';
-   $result .= '	      <b style="color:blue" class="w3-right">'.$scheduledDuration.'</b>';
+   $result .= '	      <b style="color:blue" class="w3-right">'.$scheduledDurationStr.'</b>';
    $result .= '	   </td>';
    $result .= '	 </tr>';
    if ($durationDiscrepancy) {
       $result .= '	 <tr>';
       $result .= '	   <td>Actual Duration:</td>';
       $result .= '	   <td colspan="2">';
-      $result .= '	      <b style="color:red" class="w3-right">'.$actualDuration.'</b>';
+      $result .= '	      <b style="color:red" class="w3-right">'.$actualDurationStr.'</b>';
       $result .= '	   </td>';
       $result .= '	 </tr>';
       $showDbId = true;
    }
 
+   // Uncomment the following to show the path to the selected file
+   $result .= '	 <tr>';
+   $result .= '	   <td>'.($isCompressed ? 'Compressed ':'').'File:</td>';
+   $result .= '	   <td colspan="2">';
+   $result .= '<b style="color:blue" class="w3-right">'.$file;
+   $result .= '       </b>';
+   $result .= '	   </td>';
+   $result .= '	 </tr>';
+   
    $fileExists = file_exists($file);
    $result .= '	 <tr>';
    if ($fileExists) {
@@ -314,6 +308,81 @@ function renderEntryInfo($id)
       $result .= '  </tr>';
       $result .= '</table>';
    }
+   
+   return $result;
+}
+
+
+function renderSchdInfo($id)
+{
+   $ini = parse_ini_file("./config.ini");
+   $DbBase = $ini['couchbase'];
+   $Db = "dvr";
+   $detailUrl = $DbBase.'/'.$Db.'/'.$id;
+
+   $detail = json_decode(file_get_contents($detailUrl), true);
+   $channel = $detail['channel'];
+   $description = $detail['description'];
+   $result = '';
+   
+   $recordStart = $detail['record-start'];
+   $recordEnd = $detail['record-end'];
+   $startTimeStr = date("h:i a",$recordStart);
+   $scheduledDuration = deltaTimeStr($recordEnd-$recordStart);
+
+   $url = "http://ipv4-api.hdhomerun.com/discover";
+   $devices = json_decode(file_get_contents($url), true);
+   foreach ($devices as $device) {
+      $deviceUrl = $device['DiscoverURL'];
+      $device_detail = json_decode(file_get_contents($deviceUrl), true);
+      $deviceId = $device_detail['DeviceID'];
+      $lineupJsonUrl = $device_detail['LineupURL'];
+      $lineup = json_decode(file_get_contents($lineupJsonUrl), true);
+   }
+
+   $channelName = 'unknown';
+   foreach ($lineup as $c) {
+      $num = $c['GuideNumber'];
+      $name = $c['GuideName'];
+      if ($num === $channel) $channelName = $name;
+   }
+
+   $result .= '<table>';
+   $result .= '  <tr>';
+   $result .= '    <td>Channel:</td>';
+   $result .= '    <td>';
+   $result .= '       <b style="color:blue" class="w3-right">'.$channel.'</b>';
+   $result .= '    </td>';
+   $result .= '    <td>';
+   $result .= '       <b style="color:blue" class="w3-right">'.$channelName.'</b>';
+   $result .= '	   </td>';
+   $result .= '	 </tr>';
+   
+   $result .= '	 <tr>';
+   $result .= '	   <td>Description:</td>';
+   $result .= '	   <td colspan="2">';
+   $result .= '	      <b style="color:blue" class="w3-right">'.$description.'</b>';
+   $result .= '	   </td>';
+   $result .= '	 </tr>';
+
+   $result .= '	 <tr>';
+   $result .= '	   <td>'.'Start Time'.':</td>';
+   $result .= '	   <td colspan="2">';
+   $result .= '	      <b style="color:blue" class="w3-right">'.$startTimeStr.'</b>';
+   $result .= '	   </td>';
+   $result .= '	 </tr>';
+
+   $result .= '	 <tr>';
+   $result .= '	   <td>'.'Duration'.':</td>';
+   $result .= '	   <td colspan="2">';
+   $result .= '	      <b style="color:blue" class="w3-right">'.$scheduledDuration.'</b>';
+   $result .= '	   </td>';
+   $result .= '	 </tr>';
+
+   $result .= '</table>';
+
+   $result .= '<p> </p>';
+   $result .= '<p> </p>';
    
    return $result;
 }
@@ -435,6 +504,13 @@ function renderMenuItems($enabled,$refs)
 
 function renderMenu($enabled, $userName)
 {
+   $refs = array(
+      'live' => './live.php',
+      'library' => './recordings.php',
+      'recording' => './recordings.php',
+      'scheduled' => './schedules.php'
+   );
+   
    $result = '';
    $result .= renderProfileArea($userName);
    $result .= ' <div id="menuArea">';
@@ -442,7 +518,7 @@ function renderMenu($enabled, $userName)
    $result .= '     <img src="img/home.png" width="64" height="64" title="Home" style="padding:5px;" class="Btn">';
    $result .= '   </a>';
    $result .= '   <div id="menuItems" class="w3-show">';
-   $result .= renderMenuItems($enabled);
+   $result .= renderMenuItems($enabled,$refs);
    $result .= '   </div>';
    $result .= ' </div>';
    return $result;
@@ -462,6 +538,7 @@ function putDb($couchUrl,$row) {
   );
   $resultStr = curl_exec($ch);
   $result = json_decode($resultStr, true);
+  return $result;
 }
 
 

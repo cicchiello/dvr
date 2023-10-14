@@ -44,7 +44,8 @@ echo "Done update and upgrade..."
 if [ ! -f "${here}/.apache-installed" ]
 then
     apt-get -y install apache2 apache2-utils
-    apt-get -y install libapache2-mod-php5 php5 php-pear php5-xcache php5-mysql php5-curl php5-gd
+#    apt-get -y install libapache2-mod-php5 php5 php-pear php5-xcache php5-mysql php5-curl php5-gd
+    apt-get -y install libapache2-mod-php php php-pear php-mysql php-curl php-gd
     touch "${here}/.apache-installed"
 else
     echo "Apache installations appear to be done; skipping..."
@@ -52,6 +53,7 @@ fi
 
 if [ ! -f "${here}/.py-packages" ]
 then
+    apt-get -y install python-pip
     pip install psutil
     pip install configparser
     touch "${here}/.py-packages"

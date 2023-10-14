@@ -1,7 +1,18 @@
+<!DOCTYPE html>
+
 <?php
     // intentionally place this before the html tag
 
+    // Uncomment to see php errors
+    //ini_set('display_errors', 1);
+    //ini_set('display_startup_errors', 1);
+    //error_reporting(E_ALL);
+
+    include('dvr_utils.php');
+
     $postError = 1;
+    $success = 0;
+    
     setcookie('login_user', "unknown", time()-3600, '/');
     if (isset($_POST['uname']) && isset($_POST['pswd']))
     {
@@ -11,35 +22,18 @@
       $sessionTimeout_s = $ini['sessionTimeout_s'];
       $Db = "dvr";
       $DbViewBase = $DbBase.'/'.$Db.'/_design/dvr/_view';
-      $WriteDb = $DbBase.'/'.$Db;
-
-      $success = 0;
 
       $usersUrl = $DbViewBase.'/user?key="'.$_POST['uname'].'"';
       $user_detail = json_decode(file_get_contents($usersUrl), true);
       $row = $user_detail['rows'][0]['value'];
       $pswd = hash('sha256', $_POST['pswd']);
-      if ($row['password'] == $pswd) {
-	 $id = $row['_id'];
+      $pswd2 = $row['password'];
+      if ($pswd2 == $pswd) {
+	 $uid = $row['_id'];
          unset($row['_id']);
 
-	 // init cooking with timeout
-         setcookie('login_user', $_POST['uname'],
-	 	   time()+$sessionTimeout_s, '/');
-
-         $couchUrl = $WriteDb.'/'.$id;
-         $row['last-login'] = time();
-         $ch = curl_init($couchUrl);
-         $dataStr = json_encode($row);
-         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "PUT");
-         curl_setopt($ch, CURLOPT_POSTFIELDS, $dataStr);
-         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-         curl_setopt($ch, CURLOPT_HTTPHEADER, array(
-       	      'Content-Type: application/json;charset=UTF-8',
-	      'Content-Length: '.strlen($dataStr))
-         );
-         $resultStr = curl_exec($ch);
-         $result = json_decode($resultStr, true);
+	 // init cookie with timeout
+         setcookie("login_user", $_POST['uname'], time()+$sessionTimeout_s, '/');
 
          $success = 1;
       }
@@ -51,10 +45,8 @@
 
   <head>
     <?php
-       include('dvr_utils.php');
-
        echo renderLookAndFeel();
-       ?>
+     ?>
 
     <link href="./login.css" media="all" rel="stylesheet">
     
@@ -69,7 +61,7 @@
     }
   </style>
 
-<script>
+  <script>
     "use strict";
 
     function sleep(ms) {
@@ -77,18 +69,19 @@
     }
 
     async function success() {
+       await sleep(500);
        open('./index.php',"_self");
     }
     
     async function loginFailed() {
        document.getElementById('invalidUserSplash').style.display='block';
-       await sleep(8000);
+       await sleep(5000);
        open('./login.php',"_self");
     }
     
     async function loginError() {
        document.getElementById('errorSplash').style.display='block';
-       await sleep(8000);
+       await sleep(5000);
        open('./login.php',"_self");
     }
     
@@ -107,12 +100,17 @@
 	echo 'onload="loginError()">';
       }
       //echo var_dump($_REQUEST);
-      ?>
+      //echo var_dump($_COOKIE['login_user']);
+     ?>
 
     <div id="invalidUserSplash" class="modal">
       <!-- Modal Content -->
         <div class="animate modal-content err">
 	   <div class="container">
+	   <?php
+ 	      echo '<b>TestMessage</b>';
+	      echo var_dump($user_detail);
+	    ?>
 	      <b>Invalid Username or Password</b>
 	   </div>
 	</div>

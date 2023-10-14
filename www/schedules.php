@@ -1,4 +1,15 @@
 <!DOCTYPE html>
+
+<?php
+    // intentionally place this before the html tag
+
+    // Uncomment to see php errors
+    ini_set('display_errors', 1);
+    ini_set('display_startup_errors', 1);
+    error_reporting(E_ALL);
+
+  ?>
+
 <html>
   
   <head>
@@ -149,7 +160,7 @@
        //console.log("id: "+id);
        var schdArea = document.getElementById("scheduled");
        schdArea.className = schdArea.className.replace(" w3-show", " w3-hide");
-       window.location.replace('./schedules_del.php', "", "", true);
+       window.location.replace('./schedules_del.php?id='+id);
     }
     
     async function forceLogin() {
@@ -163,27 +174,37 @@
   <body class="bg" 
 
     <?php
-      if (isset($_COOKIE['login_user'])) {
-        echo 'onload="init()">';
-      } else {
-        echo 'onload="forceLogin()">';
-      }
+       if (isset($_COOKIE['login_user'])) {
+          echo 'onload="init()">';
+       } else {
+          echo 'onload="forceLogin()">';
+       }
        
 
-      $ini = parse_ini_file("./config.ini");
-      $DbBase = $ini['couchbase'];
-      $Db = "dvr";
-      $DbViewBase = $DbBase.'/'.$Db.'/_design/dvr/_view';
+       $ini = parse_ini_file("./config.ini");
+       $DbBase = $ini['couchbase'];
+       $Db = "dvr";
+       $DbViewBase = $DbBase.'/'.$Db.'/_design/dvr/_view';
       
-      $enabled = array(
-	'live' => false,
-	'library' => false,
-	'recording' => false,
-	'scheduled' => true
-      );
+       $url = "http://ipv4-api.hdhomerun.com/discover";
+       $devices = json_decode(file_get_contents($url), true);
+	    
+       $deviceId = "TBD";
+       foreach ($devices as $device) {
+	  $deviceUrl = $device['DiscoverURL'];
+	  $device_detail = json_decode(file_get_contents($deviceUrl), true);
+	  $deviceId = $device_detail['DeviceID'];
+       }
+    
+       $enabled = array(
+         'live' => false,
+	 'library' => false,
+	 'recording' => false,
+	 'scheduled' => true
+       );
 	      
-      echo renderMenu($enabled, $_COOKIE['login_user']);
-      ?>
+       echo renderMenu($enabled, $_COOKIE['login_user']);
+     ?>
  
     <div id="scheduled" class="w3-container w3-display-middle w3-show">
       
@@ -201,7 +222,7 @@
 	      "onclick" => "deleteAction",
 	      "src" => "img/trashcan.png",
 	      "title" => "Delete"
-	   );
+  	   );
 	   echo renderRecordingsTable(json_decode(file_get_contents($url), true)['rows'],
 	                              array($editAction, $deleteAction));
 	?>
@@ -291,7 +312,7 @@
       </form>
     </div>
 
-    <div id="calendar" class="w3-display-bottomleft w3-hide">      
+    <div id="calendar" class="w3-display-bottomleft w3-hide" style="margin:20px">
       <div class="demo-section k-header" style="width:300px; text-align:center;">
 	<div id="cal"></div>
       </div>
@@ -315,9 +336,9 @@
       </script>
     </div>
 
-    <div id="channelSelector" style="height:100%; padding:20px; z-index:999" class="w3-hide">
+    <div id="channelSelector" style="height:95%; padding:20px; z-index:999" class="w3-hide w3-display-bottomright">
       <iframe id="channelSelectorFrame" src="./channels.php"
-	      height="90%" frameborder="1" style="float:right; z-index:999">
+	      height="100%" frameborder="1" style="float:right; z-index:999">
 	<p>Your browser does not support iframes.</p>
       </iframe>
     </div>

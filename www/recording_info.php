@@ -1,4 +1,15 @@
 <!DOCTYPE html>
+
+<?php
+    // intentionally place this before the html tag
+
+    // Uncomment to see php errors
+    ini_set('display_errors', 1);
+    ini_set('display_startup_errors', 1);
+    error_reporting(E_ALL);
+
+  ?>
+
 <html>
   
   <head>
@@ -31,7 +42,7 @@
           'recording' => false,
           'scheduled' => false
        );
-       echo renderMenu($enabled);
+       echo renderMenu($enabled, $_COOKIE['login_user']);
        ?>
 
     <div id="detail"

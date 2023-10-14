@@ -22,8 +22,9 @@ then
     ./autogen.sh
     ./configure --enable-shared --enable-static
     make
-    sudo make install
-    sudo ldconfig
+    make install
+    ldconfig
+    make clean
     cd "${here}"
 fi
 
@@ -32,11 +33,13 @@ fi
 #   https://sebastian.korotkiewicz.eu/2016/09/30/ffmpeg-on-raspbian-raspberry-pi/
 if [ ! -d "${here}/x264" ]
 then
-    git clone --depth 1 git://git.videolan.org/x264
+    # git clone --depth 1 git://git.videolan.org/x264 # Obsolete/moved
+    git clone https://code.videolan.org/videolan/x264.git
     cd x264
     ./configure --host=arm-unknown-linux-gnueabi --enable-static --disable-opencl
     make -j 4
     make install
+    make clean
     cd "${here}"
 fi
 
@@ -50,6 +53,7 @@ then
     ./configure
     make
     make install
+    make clean
     cd "${here}"
 fi
 
@@ -102,3 +106,13 @@ fi
 #   - NOTE: output file extension appears to really matter!  Use "mpg" -- then you can change it
 #     to mp4 later.  Without doing that, no audio ends up in the stream.
 
+
+
+
+# All the above no longer work after resurecting the system on 10/14/23.  Everything above that I tried produced
+# reasonable file sizes, but when run on Windows Media player there's just audio.
+#
+# However, the following does work on Media player
+# time ffmpeg -i /home/pi/dvr/py/raw/1aa5354ae18812df0052258cac0017e5.mp4 -vcodec libx264 -crf 24  -y /home/pi/dvr/py/compressed/test_output.mkv
+#   - note the output extension matters to ffmpeg -- so can't really change it after the fact
+#   - Media player likes mkv or if I rename it to mp4

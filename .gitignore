@@ -1,6 +1,7 @@
 *~
 *#
 .apache-installed
+.py-packages
 .psutil-installed
 raw
 library
