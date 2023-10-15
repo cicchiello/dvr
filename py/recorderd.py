@@ -22,7 +22,6 @@ def usage():
     exit()
 
 def nowstr():
-    fmt = '%Y-%b-%d %H:%M:%S'
     return datetime.datetime.today().strftime('%Y-%b-%d %H:%M:%S')
 
 if ((len(sys.argv) < 3) or \
@@ -63,13 +62,13 @@ DbPswd = config[mode]['DbPswd']
 Db = config[mode]['Db']
 DbWriteAuth = None if (not (DbKey and DbPswd)) else (DbKey,DbPswd)
     
-print("%s: Mode: %s" % (nowstr(), mode))
-print("%s: Using dvr-filesystem root: %s" % (nowstr(), dvr_fs))
-print("%s: DbBase: %s" % (nowstr(), DbBase))
-print("%s: DbKey: %s" % (nowstr(), DbKey))
-print("%s: DbPswd: %s" % (nowstr(), DbPswd))
-print("%s: Db: %s" % (nowstr(), Db))
-print("%s: DbWriteAuth: %s" % (nowstr(), DbWriteAuth))
+print("INFO(%s): Mode: %s" % (nowstr(), mode))
+print("INFO(%s): Using dvr-filesystem root: %s" % (nowstr(), dvr_fs))
+print("INFO(%s): DbBase: %s" % (nowstr(), DbBase))
+print("INFO(%s): DbKey: %s" % (nowstr(), DbKey))
+print("INFO(%s): DbPswd: %s" % (nowstr(), DbPswd))
+print("INFO(%s): Db: %s" % (nowstr(), Db))
+print("INFO(%s): DbWriteAuth: %s" % (nowstr(), DbWriteAuth))
 
 ALL_OBJS_URL = DbBase+'/'+Db+'/_all_docs'
 BULK_DOCS_URL = DbBase+'/'+Db+'/_bulk_docs'
@@ -211,7 +210,7 @@ def handleMissedSchedules(rs, now):
 def invoke(n, fs):
     id = n['_id']
     url = n['url']
-    cmdArr = ['/usr/bin/curl','-X','GET',url,'-i','-o',fs+'/raw/'+id+'.mp4'];
+    cmdArr = ['/usr/bin/curl','-X','GET',url,'-s','-i','-o',fs+'/raw/'+id+'.mp4'];
     print("INFO(%s): cmd: %s" % (nowstr(), cmdArr))
     return subprocess.Popen(cmdArr, shell=False)
 
@@ -265,7 +264,6 @@ def stopCapture(s, now):
     print("INFO(%s): Here's the update I'm going to make: %s" % (nowstr(), json.dumps(s,indent=3)))
     url = POST_URL+'/'+id
     r = requests.put(url, auth=DbWriteAuth, json=s)
-    #print r.json()
     
     dst = dvr_fs+'/library/'+cleanDescription(s['description'])+'.mp4'
     src = dvr_fs+'/'+s['file']

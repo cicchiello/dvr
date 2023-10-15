@@ -109,10 +109,13 @@ fi
 
 
 
-# All the above no longer work after resurecting the system on 10/14/23.  Everything above that I tried produced
-# reasonable file sizes, but when run on Windows Media player there's just audio.
+# All the above no longer work after resurecting the system on 10/14/23.  Everything above that I
+# tried produced reasonable file sizes, but when run on Windows Media player there's just audio.
 #
 # However, the following does work on Media player
-# time ffmpeg -i /home/pi/dvr/py/raw/1aa5354ae18812df0052258cac0017e5.mp4 -vcodec libx264 -crf 24  -y /home/pi/dvr/py/compressed/test_output.mkv
-#   - note the output extension matters to ffmpeg -- so can't really change it after the fact
-#   - Media player likes mkv or if I rename it to mp4
+# time ffmpeg -i /home/pi/dvr/py/raw/sample.mp4 -vf scale=-1:720 -c:v libx264 -crf 24 -y /home/pi/dvr/py/compressed/test_out.mp4
+#   - fps is about 14
+
+# Consider converting to h265 encoding, per: 
+#  https://raspberrypi.stackexchange.com/questions/33807/how-to-convert-h265-videos-to-h264-videos-on-pi2
+

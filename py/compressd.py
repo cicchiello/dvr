@@ -249,7 +249,7 @@ def compress(n, now, fs):
         infile = fs+'/'+n['file']
         tmpfile = fs+'/compressed/'+id+'.mkv';
         cmdArr = ['/usr/local/bin/ffmpeg','-loglevel','quiet','-i',infile, \
-                  '-vcoded','libx264','-crf','24','-y',tmpfile];
+                  '-vf', 'scale=-1:720', '-c:v','libx264','-crf','24','-y',tmpfile];
         print('INFO(%s): compression cmd to issue: %s' % (nowstr(),cmdArr))
         proc = subprocess.Popen(cmdArr, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=False, preexec_fn=preexec_fn)
         
@@ -298,16 +298,16 @@ def handleUncompressedRecordingSet(rs, now, fs):
 
 def zombieHunt(now):
     print("INFO(%s): Performing Zombie Hunt" % nowstr())
-    print("INFO(%s): Making GET request to: %s" % (nowstr(), COMPRESSING_URL))
+    #print("DEBUG(%s): Making GET request to: %s" % (nowstr(), COMPRESSING_URL))
     rset = json.loads(requests.get(COMPRESSING_URL).text)['rows']
     print("DEBUG(%s): there are %d compressing jobs found" % (nowstr(), len(rset)))
     print("DEBUG(%s): here's rset: %s" % (nowstr(),json.dumps(rset,indent=3)))
     for i in range(0, len(rset)):
-        print("DEBUG(%s): here's rset[%d]: %s" % (nowstr(), i, json.dumps(rset[i],indent=3)))
+        #print("DEBUG(%s): here's rset[%d]: %s" % (nowstr(), i, json.dumps(rset[i],indent=3)))
         n = rset[i]['value']
         if (now > n['compression-heartbeat']+60*2*ZOMBIE_HUNT_RATE_MIN):
             print('INFO(%s): Found a zombie!  Reverting it to uncompressed state.' % (nowstr()))
-            print('DEBUG(%s): last heartbeat: %s' % (nowstr(),n['compression-heartbeat']))
+            #print('DEBUG(%s): last heartbeat: %s' % (nowstr(),n['compression-heartbeat']))
             revertCompression(n, now, dvr_fs)
     print("INFO(%s): Done Zombie Hunt" % nowstr())
 
@@ -362,6 +362,7 @@ sys.excepthook = sysexception
 
 
 # Let's wait a bit before starting anything that might need the db, in case it's not available yet
+print("INFO(%s): Waiting a bit in case anything's not available yet" % (nowstr()))
 time.sleep(50)
 
 urs = getUncompressedRecordingSet(None)
@@ -371,14 +372,11 @@ zombieHunt(zombieTimestamp)
 print("INFO(%s): Entering main loop" % (nowstr()))
 while (True):
     now = calendar.timegm(time.gmtime())
-    #print ""
 
     if (len(activeCompressions) < MAX_COMPRESSIONS):
-        print("INFO(%s): looking for newly captured recording to compress..." % (nowstr()))
+        #print("DEBUG(%s): looking for newly captured recording to compress..." % (nowstr()))
         urs = handleUncompressedRecordingSet(urs, now, dvr_fs)
-        #print ""
 
-    #print nowstr(),"Sleeping..."
     time.sleep(50)
 
     newCompressions = []
@@ -395,6 +393,7 @@ while (True):
             else:
                 print('INFO(%s): The compression job for %s failed' % (nowstr(), id))
                 print('INFO(%s): the subprocess returncode is %s' % (nowstr(), proc.returncode))
+                print('INFO(%s): Reverting the compression record' % (nowstr()))
                 revertCompression(n, now, dvr_fs);
         else:
             if (now > compression['heartbeat']+60*HEARTBEAT_RATE_MIN):
