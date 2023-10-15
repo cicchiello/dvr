@@ -23,7 +23,7 @@ ZOMBIE_HUNT_RATE_MIN=2*HEARTBEAT_RATE_MIN+1
 activeCompressions=[]
 
 def usage():
-    print "Usage:",sys.argv[0]," -ini <ini-file> [-mode {prod|dev}]"
+    print "Usage:",sys.argv[0]," -ini <ini-file> [-mode {prod|dev}] [-v]"
     print ""
     print "Note, each instance of this will, at most, process one compression at a time.  You can safely "
     print "start multiple instaces if the platform can handle multiple compressions at once"
@@ -42,13 +42,23 @@ if (sys.argv[1] != "-ini"):
     print "ERROR: expected '-ini' for 2nd argument"
     usage()
 
-if ((len(sys.argv) > 3) and (sys.argv[3] != "-mode")):
-    print "ERROR: expected '-mode' for 4th argument"
+if ((len(sys.argv) > 3) and (sys.argv[3] != "-mode") and (sys.argv[3] != "-v")):
+    print "ERROR: expected '-mode' or '-v' for 4th argument"
     usage()
 
+verbose = False
+mode = "prod"
+if ((len(sys.argv) > 3) and (sys.argv[3] == "-mode")):
+    mode = sys.argv[4]
+    if ((len(sys.argv) > 5) and (sys.argv[5] != "-v")):
+        print "ERROR: expected '-v' for last argument"
+    else:
+        verbose = (len(sys.argv) > 5) and (sys.argv[5] == "-v")
+else:
+    verbose = (len(sys.argv) > 3) and (sys.argv[3] == "-v")
+    
 dvr_fs = os.path.dirname(sys.argv[0])
 iniFilename = sys.argv[2]
-mode = "prod" if (len(sys.argv) < 4) else sys.argv[4]
 config = configparser.ConfigParser()
 
 if (not os.path.isfile(iniFilename)):
@@ -71,15 +81,16 @@ DbPswd = config[mode]['DbPswd']
 Db = config[mode]['Db']
 DbWriteAuth = None if (not (DbKey and DbPswd)) else (DbKey,DbPswd)
 
-print nowstr(), "Host:", socket.gethostname()
-print nowstr(), "Launched:", sys.argv[0]
-print nowstr(), "Mode:", mode
-print nowstr(), "Using dvr-filesystem root:", dvr_fs
-print nowstr(), "DbBase:", DbBase
-print nowstr(), "DbKey:", DbKey
-print nowstr(), "DbPswd:", DbPswd
-print nowstr(), "Db:", Db
-print nowstr(), "DbWriteAuth:", DbWriteAuth
+if (verbose):
+    print nowstr(), "ECHO: Host:", socket.gethostname()
+    print nowstr(), "ECHO: Launched:", sys.argv[0]
+    print nowstr(), "ECHO: Mode:", mode
+    print nowstr(), "ECHO: Using dvr-filesystem root:", dvr_fs
+    print nowstr(), "ECHO: DbBase:", DbBase
+    print nowstr(), "ECHO: DbKey:", DbKey
+    print nowstr(), "ECHO: DbPswd:", DbPswd
+    print nowstr(), "ECHO: Db:", Db
+    print nowstr(), "ECHO: DbWriteAuth:", DbWriteAuth
 
 ALL_OBJS_URL = DbBase+'/'+Db+'/_all_docs'
 BULK_DOCS_URL = DbBase+'/'+Db+'/_bulk_docs'
@@ -121,9 +132,9 @@ def fetchActiveCompressionsResultSet():
 
     
 def fetchUncompressedRecordingSet():
-    print nowstr(),"fetching uncompressed recording set with GET to: "+CAPTURED_URL
+    #print nowstr(),"fetching uncompressed recording set with GET to: "+CAPTURED_URL
     responseStr = requests.get(CAPTURED_URL).text
-    print nowstr(),"response: "+responseStr
+    #print nowstr(),"response: "+responseStr
     return json.loads(responseStr)['rows']
 
     
@@ -138,7 +149,7 @@ def cleanDescription(d):
     
 
 def closeCompression(n, now, fs):
-    #setup symlink to esulting h264 file in ./library
+    #setup symlink to resulting h264 file in ./library
     
     #  (but first due to quirk in ffmpeg libs, have to correct the file extension)
     id = n['_id']
@@ -156,8 +167,14 @@ def closeCompression(n, now, fs):
 
     cleanDesc = cleanDescription(n['description'])
     dstfile = fs+'/library/'+cleanDesc+'.mp4'
+
+    print nowstr(),"DEBUG: if present, first remove:",dstfile
+    try:
+        os.remove(dstfile)
+    except:
+        print nowstr(),"DEBUG: exception caught during remove attempt; assuming the file doesn't exist"
+        
     print nowstr(),"DEBUG: Here's the symlink to establish:",outfile," ",dstfile
-    os.remove(dstfile)
     os.symlink(outfile, dstfile)
     
     #mv raw file to ./trashcan
@@ -178,6 +195,7 @@ def closeCompression(n, now, fs):
     del n['_id']
     n.pop('compressing', None)
     n.pop('compression-heartbeat', None)
+    n.pop('proc', None)
     n['compression-end-timestamp'] = now
     n['file'] = 'library/'+cleanDesc+'.mp4'
     n['is-compressed'] = True;
@@ -269,7 +287,7 @@ def handleUncompressedRecordingSet(rs, now, fs):
 
 
 def zombieHunt(now):
-    print nowstr(), "Performing Zombie Hunt"
+    print nowstr(), "INFO: Performing Zombie Hunt"
     print nowstr(),"Making GET request to: "+COMPRESSING_URL
     rset = json.loads(requests.get(COMPRESSING_URL).text)['rows']
     #print nowstr(),"DEBUG: there are",len(rset),"compressing jobs found"
@@ -277,12 +295,12 @@ def zombieHunt(now):
     for i in range(0, len(rset)):
         #print nowstr(),"DEBUG: here's rset[i]:",json.dumps(rset[i],indent=3)
         n = rset[i]['value']
-        if ((not psutil.pid_exists(n['prod'])) and (now > n['compression-heartbeat']+60*2*ZOMBIE_HUNT_RATE_MIN)):
+        if ((not psutil.pid_exists(n['proc'])) and (now > n['compression-heartbeat']+60*2*ZOMBIE_HUNT_RATE_MIN)):
             print nowstr(),'Found a zombie!  Reverting it to uncompressed state.'
             print nowstr(),'now: ',now
             print nowstr(),'last heartbeat: ',n['compression-heartbeat']
             revertCompression(n, now, dvr_fs)
-    print nowstr(), "Done Zombie Hunt"
+    #print nowstr(), "DEBUG: Done Zombie Hunt"
 
 
 
@@ -336,7 +354,7 @@ sys.excepthook = sysexception
 
 
 # Let's wait a bit before starting anything that might need the db, in case it's not available yet
-time.sleep(10)
+time.sleep(5)
 
 urs = fetchUncompressedRecordingSet()
 now = calendar.timegm(time.gmtime())
@@ -352,12 +370,12 @@ activeCompressions = fetchActiveCompressionsResultSet()
 if (len(activeCompressions) < MAX_COMPRESSIONS):
     print nowstr(),"INFO: Looking for a captured recording to compress..."
     urs = handleUncompressedRecordingSet(urs, now, dvr_fs)
-    print nowstr(),"INFO: Refetching the list of active compression jobs..."
+    #print nowstr(),"DEBUG: Refetching the list of active compression jobs..."
     activeCompressions = fetchActiveCompressionsResultSet()
 else:
-    print nowstr(),"INFO: No compressions can be started while MAX_COMPRESSIONS already running"
+    print nowstr(),"INFO: Not considering new compressions while MAX_COMPRESSIONS =",MAX_COMPRESSIONS,"already running"
 
-print nowstr(),"INFO: Considering active jobs"
+print nowstr(),"INFO: Looking for active compression jobs"
 for compression in activeCompressions:
     #print "considering: ",compression
     n = compression['record']
@@ -382,3 +400,4 @@ for compression in activeCompressions:
             print nowstr(),'the subprocess returncode is',proc.returncode
             revertCompression(n, now, dvr_fs);
     
+#print nowstr(),"INFO: Done for now"
