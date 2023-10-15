@@ -147,7 +147,7 @@ def cleanDescription(d):
     
 
 def closeCompression(n, now, fs):
-    #setup symlink to esulting h264 file in ./library
+    #setup symlink to resulting h264 file in ./library
     
     #  (but first due to quirk in ffmpeg libs, have to correct the file extension)
     id = n['_id']
