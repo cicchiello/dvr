@@ -13,9 +13,9 @@ echo "${d}: hostname returned \"${host}\"" >> /home/pi/logs/dvr-startup.log
 d=$(date)
 echo "${d}: invoking compressd.py and recorderd.py..." >> /home/pi/logs/dvr-startup.log
 echo "${d}: invoking compressd.py" >> /home/pi/logs/dvr-compressd.log
-python -u /home/pi/dvr/py/compressd.py -ini /home/pi/dvr/py/config.ini -mode prod >> /home/pi/logs/dvr-compressd.log &
+python3 -u /home/pi/dvr/py/compressd.py -ini /home/pi/dvr/py/config.ini -mode prod >> /home/pi/logs/dvr-compressd.log &
 echo "${d}: invoking recorderd.py" >> /home/pi/logs/dvr-recorderd.log
-python -u /home/pi/dvr/py/recorderd.py -ini /home/pi/dvr/py/config.ini -mode prod >> /home/pi/logs/dvr-recorderd.log
+python3 -u /home/pi/dvr/py/recorderd.py -ini /home/pi/dvr/py/config.ini -mode prod >> /home/pi/logs/dvr-recorderd.log
 d=$(date)
 echo "${d}: recorder.py shutdown" >> /home/pi/logs/dvr-startup.log
 echo "${d}: sending email" >> /home/pi/logs/dvr-startup.log
