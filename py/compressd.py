@@ -226,7 +226,7 @@ def heartbeat(n, now):
         n['_rev'] = r.json()['rev']
     else:
         n['compression-heartbeat'] = prevHeartbeat
-        print("ERROR(%s): Failed: %s" % (nowstr(), json.dumps(r.json(),indent=3))
+        print("ERROR(%s): Failed: %s" % (nowstr(), json.dumps(r.json(),indent=3)))
     n['_id'] = id
     return n
 
