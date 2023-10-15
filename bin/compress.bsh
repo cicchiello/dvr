@@ -12,5 +12,5 @@ echo "${d}: whoami returned \"${who}\"" >> /home/pi/logs/dvr-compress-startup.lo
 echo "${d}: hostname returned \"${host}\"" >> /home/pi/logs/dvr-compress-startup.log
 d=$(date)
 echo "${d}: invoking compress.py..." >> /home/pi/logs/dvr-compress-startup.log
-python -u /home/pi/dvr/py/compress.py -ini /home/pi/dvr/py/config.ini -mode prod 2>&1 >> /home/pi/logs/dvr-compress.log
+python -u /home/pi/dvr/py/compress.py -ini /home/pi/dvr/py/config.ini -mode prod ${1} 2>&1 >> /home/pi/logs/dvr-compress.log
 #d=$(date)
