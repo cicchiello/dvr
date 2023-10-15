@@ -1,0 +1,32 @@
+#!/bin/bash
+
+d=$(date)
+/bin/echo "${d}: compressd-startup.bsh invoked; waiting for 10s..." >> /home/pi/logs/dvr-compressd-startup.log
+sleep 10
+
+who=$(whoami)
+d=$(date)
+host=$(hostname)
+echo "${d}: whoami returned \"${who}\"" >> /home/pi/logs/dvr-compressd-startup.log
+echo "${d}: hostname returned \"${host}\"" >> /home/pi/logs/dvr-compressd-startup.log
+d=$(date)
+echo "${d}: invoking compressd.py..." >> /home/pi/logs/dvr-compressd-startup.log
+python -u /home/pi/dvr/py/compressd.py -ini /home/pi/dvr/py/config.ini -mode prod >> /home/pi/logs/dvr-compressd.log 
+d=$(date)
+echo "${d}: compressd.py shutdown" >> /home/pi/logs/dvr-compressd-startup.log
+echo "${d}: sending email" >> /home/pi/logs/dvr-compressd-startup.log
+#echo "To: j.cicchiello@ieee.org" > /tmp/compressd-msg.txt
+echo "${d}: To: j.cicchiello@ieee.org" >> /home/pi/logs/dvr-compressd-startup.log
+#echo "From: jcicchiello@ptd.net" >> /tmp/compressd-msg.txt
+echo "${d}: From: jcicchiello@ptd.net" >> /home/pi/logs/dvr-compressd-startup.log
+#echo "Subject: compressd.py has crashed!?!?!" >> /tmp/compressd-msg.txt
+echo "${d}: Subject: compressd.py has crashed!?!?!" >> /home/pi/logs/dvr-compressd-startup.log
+echo "" >> /tmp/compressd-msg.txt
+echo "${d}: " >> /home/pi/logs/dvr-compressd-startup.log
+echo "compressd.py has shutdown unexpectedly!" >> /tmp/compressd-msg.txt
+echo "${d}: compressd.py has shutdown unexpectedly!" >> /home/pi/logs/dvr-compressd-startup.log
+echo "see /home/pi/logs/dvr-compressd.log for info" >> /tmp/compressd-msg.txt
+echo "${d}: see /home/pi/logs/dvr-compressd.log for info" >> /home/pi/logs/dvr-compressd-startup.log
+echo $(date) >> /tmp/compressd-msg.txt
+echo "" >> /tmp/compressd-msg.txt
+mail -s "compressd.py has crashed!" j.cicchiello@ieee.org < /tmp/compressd-msg.txt

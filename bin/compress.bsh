@@ -1,0 +1,16 @@
+#!/bin/bash
+
+d=$(date)
+/bin/echo "${d}: compress.bsh invoked;" >> /home/pi/logs/dvr-compress-startup.log
+#/bin/echo "${d}: compress.bsh invoked; waiting for 10s..." >> /home/pi/logs/dvr-compress.log
+#sleep 10
+
+who=$(whoami)
+d=$(date)
+host=$(hostname)
+echo "${d}: whoami returned \"${who}\"" >> /home/pi/logs/dvr-compress-startup.log
+echo "${d}: hostname returned \"${host}\"" >> /home/pi/logs/dvr-compress-startup.log
+d=$(date)
+echo "${d}: invoking compress.py..." >> /home/pi/logs/dvr-compress-startup.log
+python -u /home/pi/dvr/py/compress.py -ini /home/pi/dvr/py/config.ini -mode prod 2>&1 >> /home/pi/logs/dvr-compress.log
+#d=$(date)

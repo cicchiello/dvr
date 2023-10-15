@@ -1,0 +1,16 @@
+#!/bin/bash
+
+d=$(date)
+/bin/echo "${d}: recorder.bsh invoked;" >> /home/pi/logs/dvr-recorder-startup.log
+#/bin/echo "${d}: recorder.bsh invoked; waiting for 10s..." >> /home/pi/logs/dvr-startup.log
+#sleep 10
+
+who=$(whoami)
+d=$(date)
+host=$(hostname)
+echo "${d}: whoami returned \"${who}\"" >> /home/pi/logs/dvr-recorder-startup.log
+echo "${d}: hostname returned \"${host}\"" >> /home/pi/logs/dvr-recorder-startup.log
+d=$(date)
+echo "${d}: invoking recorderd.py..." >> /home/pi/logs/dvr-recorder-startup.log
+python -u /home/pi/dvr/py/recorder.py -ini /home/pi/dvr/py/config.ini -mode prod 2>&1 >> /home/pi/logs/dvr-recorder.log
+#d=$(date)

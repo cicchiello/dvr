@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
 import json
+import socket
 import calendar
 import time
 import requests
@@ -14,8 +15,10 @@ import sys
 import configparser
 
 MAX_COMPRESSIONS=1
+
 HEARTBEAT_RATE_MIN=10
-ZOMBIE_HUNT_RATE_MIN=15
+# ZOMBIE_HUNT_RATE_MIN needs to be at least 2x HEARTBEAT_RATE_MIN
+ZOMBIE_HUNT_RATE_MIN=2*HEARTBEAT_RATE_MIN+1
 
 activeCompressions=[]
 
@@ -125,7 +128,7 @@ def getUncompressedRecordingSet(prev):
     resetIt = prev == None
     if (not resetIt):
         uncompressedSetRefreshCnt += 1
-        resetIt = (uncompressedSetRefreshCnt > 15)
+        resetIt = (uncompressedSetRefreshCnt > 5)
     if (resetIt):
         uncompressedSetRefreshCnt = 0
         return fetchUncompressedRecordingSet()
@@ -209,22 +212,22 @@ def revertCompression(n, now, fs):
     else:
         print("ERROR(%s): Failed: %s" % (nowstr(), r.json()))
 
-
     
 def heartbeat(n, now):
     id = n['_id']
     url = POST_URL+'/'+id
     del n['_id']
+    prevHeartbeat = n['compression-heartbeat'];
     n['compression-heartbeat'] = now
-    print("INFO(%s): Here's the heartbeat update I'm going to make: %s" % (nowstr(),json.dumps(n,indent=3)))
+    print("INFO(%s): Here's the heartbeat update I'm making: %s" % (nowstr(),json.dumps(n,indent=3)))
     r = requests.put(url, auth=DbWriteAuth, json=n)
     if 'ok' in r.json():
-        print("INFO(%s): Success" % (nowstr()))
+        #print("DEBUG(%s): Success" % (nowstr()))
+        n['_rev'] = r.json()['rev']
     else:
-        print("ERROR(%s): Failed: %s" % (nowstr(), r.json()))
-    print("INFO(%s): Here's the reply: %s" % (nowstr(),json.dumps(r.json(),indent=3)))
+        n['compression-heartbeat'] = prevHeartbeat
+        print("ERROR(%s): Failed: %s" % (nowstr(), json.dumps(r.json(),indent=3))
     n['_id'] = id
-    n['_rev'] = r.json()['rev']
     return n
 
 
@@ -255,8 +258,7 @@ def compress(n, now, fs):
         
         print("INFO(%s): Here's the db update I'm going to make for id: %s %s" % (nowstr(),id,json.dumps(n,indent=3)))
         r = requests.put(url, auth=DbWriteAuth, json=n)
-        print("DEBUG(%s): Here's the reply: %s" % (nowstr(), json.dumps(r.json(),indent=3)))
-          
+        #print("DEBUG(%s): Here's the reply: %s" % (nowstr(), json.dumps(r.json(),indent=3)))
         if ('ok' in r.json()):
             print("INFO(%s): Success" % (nowstr()))
             n['_rev'] = r.json()['rev']
@@ -300,8 +302,8 @@ def zombieHunt(now):
     print("INFO(%s): Performing Zombie Hunt" % nowstr())
     #print("DEBUG(%s): Making GET request to: %s" % (nowstr(), COMPRESSING_URL))
     rset = json.loads(requests.get(COMPRESSING_URL).text)['rows']
-    print("DEBUG(%s): there are %d compressing jobs found" % (nowstr(), len(rset)))
-    print("DEBUG(%s): here's rset: %s" % (nowstr(),json.dumps(rset,indent=3)))
+    #print("DEBUG(%s): there are %d compressing jobs found" % (nowstr(), len(rset)))
+    #print("DEBUG(%s): here's rset: %s" % (nowstr(),json.dumps(rset,indent=3)))
     for i in range(0, len(rset)):
         #print("DEBUG(%s): here's rset[%d]: %s" % (nowstr(), i, json.dumps(rset[i],indent=3)))
         n = rset[i]['value']
@@ -355,6 +357,7 @@ def sysexception(t,e,tb):
     with open(filename, 'r') as infile:
         subprocess.Popen(['/usr/sbin/ssmtp', 'j.cicchiello@gmail.com'],
                          stdin=infile, stdout=sys.stdout, stderr=sys.stderr)
+    traceback.print_tb(tb)
     exit()
 
 
@@ -400,12 +403,13 @@ while (True):
                 # annotate the db record with a heartbeat so that future runs can
                 # identify zombie jobs
                 n = heartbeat(n, now)
-                compression['heartbeat'] = now
+                compression['heartbeat'] = n['compression-heartbeat']
                 compression['record'] = n
             newCompressions.append(compression)
     activeCompressions = newCompressions
     
     urs = getUncompressedRecordingSet(urs)
+    #print nowstr(), "Uncompressed recording set length: ", len(urs)
 
     if (now > zombieTimestamp+60*ZOMBIE_HUNT_RATE_MIN):
         zombieTimestamp = now

@@ -45,8 +45,10 @@
    > sudo ./init-exports.bsh mybook # use the same name as on usbdrive-setup.bsh
 ```
 
+   * download and build ffmpeg, following instructions here: https://pimylifeup.com/compiling-ffmpeg-raspberry-pi/
    * make sure that the CouchDb is setup; the url to it will be needed later
    * make sure the ulr to the CouchDb is accessible from this host (i.e. entry in /etc/hosts)
+   * make sure that ssmtp is setup since the scripts will send alerts as email messages (see ~/pitools/ssmtp-setup.bsh)
 
 ## Optional prerequisite:
    * Define a static ip address
@@ -79,6 +81,16 @@
    > sudo ./init-dvr.bsh mybook http://joes-mac-mini:5984
 ```
 
+   * Setup required python components
+
+```
+   > sudo apt-get install python-dev python3-dev
+   > cd ~ && mkdir pip && cd pip && curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py && python get-pip.py
+   > sudo python -m pip install requests psutil configparser
+```
+
+   * Setup directories (or symlinks to directories) for all of: ~/dvr/py/{raw|compressed|library|trashcan}
+   
    * Setup ffmpeg (used for conversion to h264 formats, effectively compressing by 2x-3x)
    
 ```
@@ -89,5 +101,14 @@
           mybook: use the same name as above on usbdrive-setup.bsh
 	        http://joes-mac-mini:5984 is the url to the CouchDb that contains the dvr database
 
+   * add startup invocation to /etc/rc.local
+       - you can invoke startup.bsh if everything should run on this host
+       - or one of compressd-startup.bsh or recorderd-startup.bsh as needed
+
+```
+   # near the end of /etc/rc.local, add this: 
+   /home/pi/dvr/bin/compressd-startup.bsh &
+```
+       
     Note: recordings can only be made after a subsequent reboot (recording daemon starts at boot)
 

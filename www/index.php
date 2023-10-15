@@ -54,7 +54,7 @@
 	    echo '    <p>No HDHomeRun detected.</p>';
 	    echo '    <p>Please connect the HDHomeRun to your router and refresh the page.</p>';
 	    echo '    <p>HDHomeRun PRIME: Please remove the CableCard to allow detection to complete.</p>';
-	 }
+         }
 	 ?>
     </div>
     

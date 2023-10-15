@@ -120,6 +120,8 @@ then
     chown pi:pi ${inifile}
 fi
 
+#TBD: add couchdb views and "dvr" user record
+
 popd
 
 echo "All Done!"

@@ -4,9 +4,12 @@ d=$(date)
 /bin/echo "${d}: startup.bsh invoked; waiting for 10s..." >> /home/pi/logs/dvr-startup.log
 sleep 10
 
+basedir=$(dirname "${0}")
 who=$(whoami)
 d=$(date)
+host=$(hostname)
 echo "${d}: whoami returned \"${who}\"" >> /home/pi/logs/dvr-startup.log
+echo "${d}: hostname returned \"${host}\"" >> /home/pi/logs/dvr-startup.log
 d=$(date)
 echo "${d}: invoking compressd.py and recorderd.py..." >> /home/pi/logs/dvr-startup.log
 echo "${d}: invoking compressd.py" >> /home/pi/logs/dvr-compressd.log
@@ -32,5 +35,4 @@ echo "${d}: see /home/pi/logs/dvr-recorderd.log for info" >> /home/pi/logs/dvr-s
 echo $(date) >> /tmp/msg.txt
 echo "" >> /tmp/msg.txt
 ssmtp j.cicchiello@gmail.com < /tmp/msg.txt
-
 
