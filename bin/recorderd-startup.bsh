@@ -4,6 +4,7 @@ d=$(date)
 /bin/echo "${d}: recorderd-startup.bsh invoked; waiting for 10s..." >> /home/pi/logs/dvr-startup.log
 sleep 10
 
+basedir=$(dirname "${0}")
 who=$(whoami)
 d=$(date)
 host=$(hostname)
@@ -11,7 +12,7 @@ echo "${d}: whoami returned \"${who}\"" >> /home/pi/logs/dvr-recorderd-startup.l
 echo "${d}: hostname returned \"${host}\"" >> /home/pi/logs/dvr-recorderd-startup.log
 d=$(date)
 echo "${d}: invoking recorderd.py..." >> /home/pi/logs/dvr-recorderd-startup.log
-python -u /home/pi/dvr/py/recorderd.py -ini /home/pi/dvr/py/config.ini -mode prod >> /home/pi/logs/dvr-recorderd.log
+python3 -u /home/pi/dvr/py/recorderd.py -ini /home/pi/dvr/py/config.ini -mode prod >> /home/pi/logs/dvr-recorderd.log
 d=$(date)
 echo "${d}: recorder.py shutdown" >> /home/pi/logs/dvr-recorderd-startup.log
 echo "${d}: sending email" >> /home/pi/logs/dvr-recorderd-startup.log
