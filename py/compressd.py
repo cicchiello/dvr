@@ -119,7 +119,7 @@ uncompressedSetRefreshCnt = 0
 def fetchUncompressedRecordingSet():
     global uncompressedSetRefreshCnt
     uncompressedSetRefreshCnt = 0;
-    print("INFO(%s): fetching uncompressed recording set with GET to: %s" % (nowstr(), CAPTURED_URL))
+    print("INFO(%s): Checking for uncompressed recordings..." % (nowstr()))
     return json.loads(requests.get(CAPTURED_URL).text)['rows']
 
     
@@ -166,7 +166,8 @@ def closeCompression(n, now, fs):
     cleanDesc = cleanDescription(n['description'])
     dstfile = fs+'/library/'+cleanDesc+'.mp4'
     print("DEBUG(%s): Here's the symlink to establish: %s->%s" % (nowstr(),dstfile,outfile))
-    os.remove(dstfile)
+    if os.path.isfile(dstfile):
+        os.remove(dstfile)
     os.symlink(outfile, dstfile)
     
     #mv raw file to ./trashcan
@@ -243,6 +244,7 @@ def compress(n, now, fs):
     id = n['_id']
     url = POST_URL+'/'+id
     del n['_id']
+    print('DEBUG(%s): checking for file: %s' % (nowstr(),fs+'/'+n['file']))
     if (os.path.isfile(fs+'/'+n['file'])):
         n['compression-start-timestamp'] = now
         n['compressing'] = True;
@@ -274,7 +276,7 @@ def compress(n, now, fs):
         n.pop('compressing', None)
         n.pop('compression-heartbeat', None)
         n['is-compressed'] = True
-        print("INFO(%s): Here's the update I'm going to make: %s %s" % (nowstr(),url, son.dumps(n,indent=3)))
+        print("INFO(%s): Here's the update I'm going to make: %s %s" % (nowstr(), url, json.dumps(n,indent=3)))
         r = requests.put(url, auth=DbWriteAuth, json=n)
         if 'ok' in r.json():
             print("INFO(%s): Success" % (nowstr()))
@@ -319,7 +321,7 @@ def sysexception(t,e,tb):
     progname = "compressd"
     
     print('INFO(%s): sysexception called; preparing an email...' % nowstr())
-    filename = "/tmp/"+progname+"-msg.txt"
+    filename = "/tmp/"+progname+"-email-msg.txt"
     f = open(filename, "w", 0)
     f.write("To: j.cicchiello@ieee.org\n")
     print("INFO(%s): To: j.cicchiello@ieee.org" % (nowstr()))
@@ -409,7 +411,7 @@ while (True):
     activeCompressions = newCompressions
     
     urs = getUncompressedRecordingSet(urs)
-    #print nowstr(), "Uncompressed recording set length: ", len(urs)
+    #print("DEBUG(%s)Uncompressed recording set length: %d" % (nowstr(), len(urs)))
 
     if (now > zombieTimestamp+60*ZOMBIE_HUNT_RATE_MIN):
         zombieTimestamp = now
