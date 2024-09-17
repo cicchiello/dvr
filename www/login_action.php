@@ -25,17 +25,21 @@
 
       $usersUrl = $DbViewBase.'/user?key="'.$_POST['uname'].'"';
       $user_detail = json_decode(file_get_contents($usersUrl), true);
-      $row = $user_detail['rows'][0]['value'];
-      $pswd = hash('sha256', $_POST['pswd']);
-      $pswd2 = $row['password'];
-      if ($pswd2 == $pswd) {
-	 $uid = $row['_id'];
-         unset($row['_id']);
+      $success = 0;
+      if (count($user_detail['rows']) > 0)
+      {
+         $row = $user_detail['rows'][0]['value'];
+         $pswd = hash('sha256', $_POST['pswd']);
+         $pswd2 = $row['password'];
+         if ($pswd2 == $pswd) {
+            $uid = $row['_id'];
+            unset($row['_id']);
 
-	 // init cookie with timeout
-         setcookie("login_user", $_POST['uname'], time()+$sessionTimeout_s, '/');
+            // init cookie with timeout
+            setcookie("login_user", $_POST['uname'], time()+$sessionTimeout_s, '/');
 
-         $success = 1;
+            $success = 1;
+         }
       }
     }
   ?>
@@ -107,10 +111,6 @@
       <!-- Modal Content -->
         <div class="animate modal-content err">
 	   <div class="container">
-	   <?php
- 	      echo '<b>TestMessage</b>';
-	      echo var_dump($user_detail);
-	    ?>
 	      <b>Invalid Username or Password</b>
 	   </div>
 	</div>

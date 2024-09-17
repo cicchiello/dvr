@@ -20,8 +20,12 @@
       }
     }
 
+    function sleep(ms) {
+       return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
     async function forceLogin() {
-      //await sleep(8000);
+      await sleep(3000);
       open('./login.php',"_self");
     }
     
@@ -32,6 +36,11 @@
   <body class="bg"
 
     <?php       
+       // Uncomment to see php errors
+       //ini_set('display_errors', 1);
+       //ini_set('display_startup_errors', 1);
+       //error_reporting(E_ALL);
+
        include('dvr_utils.php');
 
        if (isset($_COOKIE['login_user'])) {

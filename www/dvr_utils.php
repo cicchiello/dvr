@@ -542,6 +542,32 @@ function putDb($couchUrl,$row) {
 }
 
 
+function writeEmail($id,$email) {
+  if (!isset($ini)) {
+    $ini = parse_ini_file("./config.ini");
+  }
+  
+  $WriteDbBase = $ini['couchbase'].'/'.$ini['dbname'];
+  $row = json_decode(file_get_contents($WriteDbBase.'/'.$id), true);
+  $row['email'] = $email;
+  unset($row['_id']);
+  
+  putDb($WriteDbBase.'/'.$id, $row);
+}
+
+function writePassword($id,$pswd) {
+  if (!isset($ini)) {
+    $ini = parse_ini_file("./config.ini");
+  }
+  
+  $WriteDbBase = $ini['couchbase'].'/'.$ini['dbname'];
+  $row = json_decode(file_get_contents($WriteDbBase.'/'.$id), true);
+  $row['password'] = hash('sha256', $pswd);
+  unset($row['_id']);
+  
+  putDb($WriteDbBase.'/'.$id, $row);
+}
+
 function writeName($id,$fname,$lname) {
   if (!isset($ini)) {
     $ini = parse_ini_file("./config.ini");
@@ -549,8 +575,8 @@ function writeName($id,$fname,$lname) {
   
   $WriteDbBase = $ini['couchbase'].'/'.$ini['dbname'];
   $row = json_decode(file_get_contents($WriteDbBase.'/'.$id), true);
-  $row['firstname'] = $fname;
-  $row['lastname'] = $lname;
+  $row['fname'] = $fname;
+  $row['lname'] = $lname;
   unset($row['_id']);
   
   putDb($WriteDbBase.'/'.$id, $row);

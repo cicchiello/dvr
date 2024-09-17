@@ -2,11 +2,15 @@
 <html>
   <head>
     <?php
+       // Uncomment to see php errors
+       //ini_set('display_errors', 1);
+       //ini_set('display_startup_errors', 1);
+       //error_reporting(E_ALL);
+    
        include('dvr_utils.php');
 
        echo renderLookAndFeel();
-       
-       ?>
+      ?>
 
     <link href="./table.css" media="all" rel="stylesheet">
     <link href="./thumbs.css" media="all" rel="stylesheet">
@@ -16,24 +20,25 @@
   </head>
   
   <script>
-    async function onEditUsername(uname) {
-      post("./username_action.php", {"uname":uname});
+    async function onEditEmail(id,email) {
+      post("./email_action.php", {"id":id,"email":email});
     }
 
-    async function onEditEmail(email) {
-      post("./email_action.php", {"email":email});
-    }
-
-    async function onEditPassword(fname,lname) {
-      open("./password_action.php?fname="+fname+"&lname="+lname, "_self");
+    async function onEditPassword(id) {
+      post("./password_action.php", {"id":id});
     }
 
     async function forceLogin() {
       open("./login.php", "_self");
     }
 
-    async function onEditName(fname,lname) {
+    async function cancelEdit() {
+      open("./index.php", "_self");
+    }
+
+    async function onEditName(id,fname,lname) {
       post("./name_action.php", {
+        "id":id,
         "fname":fname,
         "lname":lname
       });
@@ -51,10 +56,11 @@
          $DbBase = $ini['couchbase'];
          $Db = $ini['dbname'];
 
-	 $usersUrl = $DbBase.'/'.$Db.'/'.$_COOKIE['login'];
-         $row = json_decode(file_get_contents($usersUrl), true);
-	 $fname = $row['firstname'];
-	 $lname = $row['lastname'];
+	 $usersUrl = $DbBase.'/'.$Db.'/_design/'.$Db.'/_view/user?key="'.$_COOKIE['login_user'].'"';
+         $row = json_decode(file_get_contents($usersUrl), true)['rows'][0]['value'];
+         $id = $row['_id'];
+	 $fname = $row['fname'];
+	 $lname = $row['lname'];
 	 $username = $row['username'];
          $email = $row['email'];
        } else {
@@ -67,6 +73,14 @@
       <div class="w3-panel w3-card w3-white w3-padding-16 w3-round-large">
         <table style="width:80%">
           <tr style = "background-color: #e2f4dd">
+            <th rowspan="1" style="text-align:left">Username:</th>
+	    <?php
+		echo '<td>'.$username.'</td>';
+	     ?>
+	    <td>
+	    </td>
+	  </tr>
+          <tr style = "background-color: #e2f4dd">
             <th rowspan="1" style="text-align:left">Name:</th>
 	    <?php
 		echo '<td>'.$fname.' '.$lname.'</td>';
@@ -75,24 +89,7 @@
 	      <div class="thumbs">
 	        <span class="columns-1-wide">
 		  <?php
-		    $cmd = '<img onclick="onEditName('."'".$fname."','".$lname."'";
-		    $cmd .= ')" src="img/edit2.png" class="Btn" title="Edit">';
-		    echo $cmd;
-		    ?>
-		</span>
-	      </div>
-	    </td>
-	  </tr>
-          <tr style = "background-color: #e2f4dd">
-            <th rowspan="1" style="text-align:left">Username:</th>
-	    <?php
-		echo '<td>'.$username.'</td>';
-	     ?>
-	    <td>
-	      <div class="thumbs">
-	        <span class="columns-1-wide">
-		  <?php
-		    $cmd = '<img onclick="onEditUsername('."'".$username."'";
+		    $cmd = '<img onclick="onEditName('."'".$id."','".$fname."','".$lname."'";
 		    $cmd .= ')" src="img/edit2.png" class="Btn" title="Edit">';
 		    echo $cmd;
 		    ?>
@@ -109,7 +106,7 @@
 	      <div class="thumbs">
 	        <span class="columns-1-wide">
 		  <?php
-		    $cmd = '<img onclick="onEditEmail('."'".$email."'";
+		    $cmd = '<img onclick="onEditEmail('."'".$id."','".$email."'";
 		    $cmd .= ')" src="img/edit2.png" class="Btn" title="Edit">';
 		    echo $cmd;
 		    ?>
@@ -124,7 +121,7 @@
 	      <div class="thumbs">
 	        <span class="columns-1-wide">
 		  <?php
-		    $cmd = '<img onclick="onEditPassword('."'".$fname."','".$lname."'";
+		    $cmd = '<img onclick="onEditPassword('."'".$id."'";
 		    $cmd .= ')" src="img/edit2.png" class="Btn" title="Edit">';
 		    echo $cmd;
 		    ?>
@@ -133,9 +130,9 @@
 	    </td>
 	  </tr>
         </table>
-	  <br>
-	  <img onclick="forceLogin()" src="img/ok.png" width="48" height="48"
-	       title="Done" class="popupBtn" align="right">
+	<br>
+	<img onclick="cancelEdit()" src="img/cancel.png" width="48" height="48"
+	     title="Cancel" class="popupBtn" align="left"/>
       </div>
     </div>
   </body>

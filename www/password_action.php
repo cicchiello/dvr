@@ -12,7 +12,7 @@
        echo renderLookAndFeel();
 
        $id = $_POST['id'];
-       $email = $_POST['email'];
+       $pswd = '********';
       ?>
 
     <link href="./login.css" media="all" rel="stylesheet">
@@ -37,9 +37,9 @@
     }
 
     async function onCommit(id) {
-      post("./commit_email.php", {
+      post("./commit_password.php", {
           "id": id,
-          "email":document.getElementById('email').value
+          "pswd":document.getElementById('password').value,
       });
     }
     
@@ -62,8 +62,8 @@
       <!-- Modal Content -->
         <div class="modal-content animate w3-container w3-round-large w3-padding">
 	  <?php
-	    echo '<label><b>Email</b></label>';
-	    echo '<input id="email" type="text" value="'.$email.'" name="email">';
+	    echo '<label><b>Password</b></label>';
+	    echo '<input id="password" type="password" placeholder="Enter Password" name="password" required/>';
 	    echo '<br>';
 	    echo '<img onclick="onCancel()" src="img/cancel.png" width="48" height="48"';
 	    echo '     title="Cancel" class="popupBtn" align="left">';
