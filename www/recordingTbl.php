@@ -70,7 +70,7 @@
 	      $Db = "dvr";
 	      $DbViewBase = $DbBase.'/'.$Db.'/_design/dvr/_view';
 	      
-	      $url = $DbViewBase.'/recordings';
+	      $url = $DbViewBase.'/recordings?descending=true';
 
               $infoAction = array(
 	         "onclick" => "infoAction",
