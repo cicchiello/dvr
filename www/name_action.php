@@ -6,6 +6,7 @@
 
        echo renderLookAndFeel();
 
+       $id = $_POST['id'];
        $fname = $_POST['fname'];
        $lname = $_POST['lname'];
       ?>
@@ -31,8 +32,9 @@
       open('./profile.php',"_self");
     }
 
-    async function onCommit() {
+    async function onCommit(id) {
       post("./commit_name.php", {
+          "id": id,
           "fname":document.getElementById('fname').value,
           "lname":document.getElementById('lname').value
       });
@@ -64,7 +66,7 @@
 	    echo '<br>';
 	    echo '<img onclick="onCancel()" src="img/cancel.png" width="48" height="48"';
 	    echo '     title="Cancel" class="popupBtn" align="left">';
-	    echo '<img onclick="onCommit()" src="img/ok.png" width="48" height="48"';
+	    echo '<img onclick="onCommit('."'".$id."'".')" src="img/ok.png" width="48" height="48"';
 	    echo '     title="Done" class="popupBtn" align="right">';
 	   ?>
 	</div>

@@ -11,6 +11,7 @@
        include('dvr_utils.php');
 
        echo renderLookAndFeel();
+       
        ?>
 
     <script src="./dvr_utils.js"></script>
@@ -24,7 +25,7 @@
     "use strict";
 
     async function init() {
-       await sleep(1000);
+       await sleep(500);
        open('./index.php',"_self");
     }
     
@@ -33,11 +34,16 @@
   </head>
   
       <?php
-	 writeName($_POST['id'], $_POST['fname'], $_POST['lname']);
+	 writePassword($_POST['id'], $_POST['pswd']);
        ?>
 	  
   <body class="bg" onload="init()">
 
+    <?php
+      //echo var_dump($_REQUEST);
+      //echo var_dump($_COOKIE['login_user']);
+     ?>
+     
   </body>
   
 </html>

@@ -33,7 +33,7 @@
   </head>
   
       <?php
-	 writeName($_POST['id'], $_POST['fname'], $_POST['lname']);
+	 writeEmail($_POST['id'], $_POST['email']);
        ?>
 	  
   <body class="bg" onload="init()">

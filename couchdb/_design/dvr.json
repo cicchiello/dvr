@@ -2,7 +2,7 @@
     "_id": "_design/dvr",
     "views": {
 	"recordings": {
-	    "map": "function (doc) {\n  if (doc.type && doc.type === 'recording')\n    emit(doc._id, doc);\n}"
+	    "map": "function (doc) {\n  if (doc.type && doc.type === 'recording')\n    emit(doc[\"record-start\"], doc);\n}"
 	},
 	"uncompressed-recordings": {
 	    "map": "function (doc) {\n  if (doc.type && doc.type === 'recording' && !doc['is-compressed'] && !doc['compressing'])\n    emit(doc._id, doc);\n}"

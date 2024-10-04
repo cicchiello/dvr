@@ -338,23 +338,24 @@ def zombieHunt(now):
             r = requests.put(url, auth=DbWriteAuth, json=n)
 
 
-            
 def sysexception(t,e,tb):
     progname = "recorderd"
 
     print("ERROR(%s): sysexception called; preparing an email..." % (nowstr()))
-    filename = "/tmp/"+progname+"-msg.txt"
-    f = open(filename, "w", 0)
+    filename = "/tmp/%s-email-%d-msg.txt" % (progname, os.getpid())
+    print('TRACE(%s): trace 1' % nowstr())
+    f = open(filename, "w")
+    print('TRACE(%s): trace 2' % nowstr())
     f.write("To: j.cicchiello@ieee.org\n")
     print("INFO(%s): To: j.cicchiello@ieee.org" % (nowstr()))
     f.write("From: jcicchiello@ptd.net\n")
     print("INFO(%s): From: jcicchiello@ptd.net" % (nowstr()))
     f.write("Subject: "+progname+".py has crashed!?!?\n")
-    print("INFO(%s): Subject: %s.py has crashed!?!?!" % (nowstr(), progname))
+    print("INFO(%s): Subject: %s has crashed!?!?" % (nowstr(), progname))
     f.write("\n")
     print("INFO(%s): " % (nowstr()))
     f.write(progname+".py has shutdown unexpectedly!\n")
-    print("INFO(%s): %s.py has shutdown unexpectedly!" % (nowstr(), progname))
+    print("INFO(%s): %s has shutdown unexpectedly!" % (nowstr(), progname))
     f.write("\n")
     print("INFO(%s): " % (nowstr()))
     f.write("type 1: ")
@@ -384,6 +385,7 @@ def sysexception(t,e,tb):
     with open(filename, 'r') as infile:
         subprocess.Popen(['/usr/sbin/ssmtp', 'j.cicchiello@gmail.com'],
                          stdin=infile, stdout=sys.stdout, stderr=sys.stderr)
+    traceback.print_tb(tb)
     exit()
 
 
