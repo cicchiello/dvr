@@ -15,18 +15,15 @@ python3 -u /home/pi/dvr/py/compressd.py -ini /home/pi/dvr/py/config.ini -mode pr
 d=$(date)
 echo "${d}: compressd.py shutdown" >> /home/pi/logs/dvr-compressd-startup.log
 echo "${d}: sending email" >> /home/pi/logs/dvr-compressd-startup.log
-#echo "To: j.cicchiello@ieee.org" > /tmp/compressd-msg.txt
 echo "${d}: To: j.cicchiello@ieee.org" >> /home/pi/logs/dvr-compressd-startup.log
-#echo "From: jcicchiello@ptd.net" >> /tmp/compressd-msg.txt
 echo "${d}: From: jcicchiello@ptd.net" >> /home/pi/logs/dvr-compressd-startup.log
-#echo "Subject: compressd.py has crashed!?!?!" >> /tmp/compressd-msg.txt
 echo "${d}: Subject: compressd.py has crashed!?!?!" >> /home/pi/logs/dvr-compressd-startup.log
-echo "" >> /tmp/compressd-msg.txt
+echo "" >> /tmp/compressd-startup-msg.txt
 echo "${d}: " >> /home/pi/logs/dvr-compressd-startup.log
-echo "compressd.py has shutdown unexpectedly!" >> /tmp/compressd-msg.txt
+echo "ERROR(compressd-startup.bsh:${d}): compressd.py has shutdown unexpectedly!" >> /tmp/compressd-startup-msg.txt
 echo "${d}: compressd.py has shutdown unexpectedly!" >> /home/pi/logs/dvr-compressd-startup.log
-echo "see /home/pi/logs/dvr-compressd.log for info" >> /tmp/compressd-msg.txt
+echo "ERROR(compressd-startup.bsh:${d}): see /home/pi/logs/dvr-compressd.log for info" >> /tmp/compressd-startup-msg.txt
 echo "${d}: see /home/pi/logs/dvr-compressd.log for info" >> /home/pi/logs/dvr-compressd-startup.log
-echo $(date) >> /tmp/compressd-msg.txt
-echo "" >> /tmp/compressd-msg.txt
-mail -s "compressd.py has crashed!" j.cicchiello@ieee.org < /tmp/compressd-msg.txt
+echo "ERROR(compressd-startup.bsh:${d})" >> /tmp/compressd-startup-msg.txt
+echo "" >> /tmp/compressd-startup-msg.txt
+mail -s "compressd.py has crashed!" j.cicchiello@ieee.org < /tmp/compressd-startup-msg.txt
