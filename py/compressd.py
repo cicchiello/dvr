@@ -119,13 +119,27 @@ uncompressedSetRefreshCnt = 0
 def fetchUncompressedRecordingSet():
     global uncompressedSetRefreshCnt
     uncompressedSetRefreshCnt = 0;
-    print("INFO(%s): Checking for uncompressed recordings..." % (nowstr()))
-    return json.loads(requests.get(CAPTURED_URL).text)['rows']
+    #print("DEBUG(%s): Checking for uncompressed recordings..." % (nowstr()))
+    _retryCnt = 5
+    while _retryCnt > 0:
+        _rsp = json.loads(requests.get(CAPTURED_URL).text)
+        if 'rows' in _rsp: 
+            return _rsp['rows']  # normal return case
+        else:
+            _retryCnt -= 1
+            if _retryCnt > 0: 
+                print("WARNING(%s): an attempt at retrieving "\
+                      "uncompressedSet failed; retrying..." % (nowstr()))
+            time.sleep(60)
+            
+    # only gets here if db not responding properly for 5 minutes
+    print("WARNING(%s): 5 attempts at retrieving uncompressedSet failed" % (nowstr()))
+    return [] # let's try to continue; report that there's nothing to do
 
     
 def getUncompressedRecordingSet(prev):
     global uncompressedSetRefreshCnt
-    resetIt = prev == None
+    resetIt = prev is None
     if (not resetIt):
         uncompressedSetRefreshCnt += 1
         resetIt = (uncompressedSetRefreshCnt > 5)
@@ -313,16 +327,18 @@ def zombieHunt(now):
             print('INFO(%s): Found a zombie!  Reverting it to uncompressed state.' % (nowstr()))
             #print('DEBUG(%s): last heartbeat: %s' % (nowstr(),n['compression-heartbeat']))
             revertCompression(n, now, dvr_fs)
-    print("INFO(%s): Done Zombie Hunt" % nowstr())
+    #print("DEBUG(%s): Done Zombie Hunt" % nowstr())
 
 
 
 def sysexception(t,e,tb):
     progname = "compressd"
     
-    print('INFO(%s): sysexception called; preparing an email...' % nowstr())
-    filename = "/tmp/"+progname+"-email-msg.txt"
-    f = open(filename, "w", 0)
+    print("ERROR(%s): sysexception called; preparing an email..." % (nowstr()))
+    filename = "/tmp/%s-email-%d-msg.txt" % (progname, os.getpid())
+    print('TRACE(%s): trace 1' % nowstr())
+    f = open(filename, "w")
+    print('TRACE(%s): trace 2' % nowstr())
     f.write("To: j.cicchiello@ieee.org\n")
     print("INFO(%s): To: j.cicchiello@ieee.org" % (nowstr()))
     f.write("From: jcicchiello@ptd.net\n")
@@ -352,6 +368,9 @@ def sysexception(t,e,tb):
     print("INFO(%s): trace back %s" % (nowstr(), str(tb)))
     f.write(str(tb))
     f.write("\n")
+    f.write("traceback.print_exception(etype,value,tb): ")
+    tb.print_exception(t,e,tb,f);
+    f.write("\n")
     print("INFO(%s): " % (nowstr()))
     f.write("\n")
     print("INFO(%s): " % (nowstr()))
@@ -379,7 +398,7 @@ while (True):
     now = calendar.timegm(time.gmtime())
 
     if (len(activeCompressions) < MAX_COMPRESSIONS):
-        #print("DEBUG(%s): looking for newly captured recording to compress..." % (nowstr()))
+        print("INFO(%s): looking for recording to compress..." % (nowstr()))
         urs = handleUncompressedRecordingSet(urs, now, dvr_fs)
 
     time.sleep(50)
