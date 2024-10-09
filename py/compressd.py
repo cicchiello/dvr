@@ -14,6 +14,8 @@ import datetime
 import sys
 import configparser
 
+PROGNAME = "compressd"
+
 MAX_COMPRESSIONS=1
 
 HEARTBEAT_RATE_MIN=10
@@ -205,10 +207,12 @@ def closeCompression(n, now, fs):
     n['compression-end-timestamp'] = now
     n['file'] = 'library/'+cleanDesc+'.mp4'
     n['is-compressed'] = True;
-    print("INFO(%s): Here's the update I'm going to make: %s" % (nowstr(),json.dumps(n,indent=3)))
+    print("INFO(%s): Here's the update I'm going to make: %s" %
+          (nowstr(),json.dumps(n,indent=3)))
     r = requests.put(url, auth=DbWriteAuth, json=n)
     if 'ok' in r.json():
        print("INFO(%s): Success" % (nowstr()))
+       completionEmail(n)
     else:
        print("ERROR(%s): Failed: %s" % (nowstr(), r.json()))
 
@@ -220,7 +224,8 @@ def revertCompression(n, now, fs):
     n.pop('compressing', None)
     n.pop('compression-start-timestamp', None)
     n.pop('compression-heartbeat', None)
-    print("DEBUG(%s): Here's the update I'm going to make: %s" % (nowstr(),json.dumps(n,indent=3)))
+    print("DEBUG(%s): Here's the update I'm going to make: %s" % 
+          (nowstr(),json.dumps(n,indent=3)))
     r = requests.put(url, auth=DbWriteAuth, json=n)
     if 'ok' in r.json():
         print("INFO(%s): Success" % (nowstr()))
@@ -234,7 +239,8 @@ def heartbeat(n, now):
     del n['_id']
     prevHeartbeat = n['compression-heartbeat'];
     n['compression-heartbeat'] = now
-    print("INFO(%s): Here's the heartbeat update I'm making: %s" % (nowstr(),json.dumps(n,indent=3)))
+    print("INFO(%s): Here's the heartbeat update I'm making: %s" % 
+          (nowstr(),json.dumps(n,indent=3)))
     r = requests.put(url, auth=DbWriteAuth, json=n)
     if 'ok' in r.json():
         #print("DEBUG(%s): Success" % (nowstr()))
@@ -259,20 +265,23 @@ def compress(n, now, fs):
     url = POST_URL+'/'+id
     del n['_id']
     print('DEBUG(%s): checking for file: %s' % (nowstr(),fs+'/'+n['file']))
-    if (os.path.isfile(fs+'/'+n['file'])):
+    _path = fs+'/'+n['file']
+    if (os.path.isfile(_path)):
         n['compression-start-timestamp'] = now
         n['compressing'] = True;
         n['compression-heartbeat'] = now
 
         #spawn the compression job
-        infile = fs+'/'+n['file']
+        infile = _path
         tmpfile = fs+'/compressed/'+id+'.mkv';
         cmdArr = ['/usr/local/bin/ffmpeg','-loglevel','quiet','-i',infile, \
                   '-vf', 'scale=-1:720', '-c:v','libx264','-crf','24','-y',tmpfile];
         print('INFO(%s): compression cmd to issue: %s' % (nowstr(),cmdArr))
-        proc = subprocess.Popen(cmdArr, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=False, preexec_fn=preexec_fn)
+        proc = subprocess.Popen(cmdArr, stdout=subprocess.PIPE,
+                                stderr=subprocess.PIPE, shell=False, preexec_fn=preexec_fn)
         
-        print("INFO(%s): Here's the db update I'm going to make for id: %s %s" % (nowstr(),id,json.dumps(n,indent=3)))
+        print("INFO(%s): Here's the db update I'm going to make for id: %s %s" %
+              (nowstr(),id,json.dumps(n,indent=3)))
         r = requests.put(url, auth=DbWriteAuth, json=n)
         #print("DEBUG(%s): Here's the reply: %s" % (nowstr(), json.dumps(r.json(),indent=3)))
         if ('ok' in r.json()):
@@ -285,12 +294,14 @@ def compress(n, now, fs):
             print("ERROR(%s): Failed: %s" % (nowstr(), json.dumps(r.json(),ndent=3)))
           
     else:
-        print("WARNING(%s): File not found for compression; marking as compressed and skipping" % nowstr())
+        print("WARNING(%s): File not found: %s ; marking as compressed and skipping" %
+              _path, nowstr())
         n.pop('compression-start-timestamp', None)
         n.pop('compressing', None)
         n.pop('compression-heartbeat', None)
         n['is-compressed'] = True
-        print("INFO(%s): Here's the update I'm going to make: %s %s" % (nowstr(), url, json.dumps(n,indent=3)))
+        print("INFO(%s): Here's the update I'm going to make: %s %s" %
+              (nowstr(), url, json.dumps(n,indent=3)))
         r = requests.put(url, auth=DbWriteAuth, json=n)
         if 'ok' in r.json():
             print("INFO(%s): Success" % (nowstr()))
@@ -305,11 +316,13 @@ def handleUncompressedRecordingSet(rs, now, fs):
     n = selectEarliest(rs, now)
     if (n != None):
         if (len(activeCompressions) < MAX_COMPRESSIONS):
-            print('INFO(%s): Found the oldest uncompressed recording; starting compression now' % (nowstr()))
+            print('INFO(%s): Found the oldest uncompressed recording; starting compression' %
+                  (nowstr()))
             proc = compress(n, now, fs)
             rs = fetchUncompressedRecordingSet()
         else:
-            print("INFO(%s): skipping compression opportunity since it's already running" % (nowstr()))
+            print("INFO(%s): skipping compression opportunity since it's already running" %
+                  (nowstr()))
     return rs
 
 
@@ -330,12 +343,9 @@ def zombieHunt(now):
     #print("DEBUG(%s): Done Zombie Hunt" % nowstr())
 
 
-
-def sysexception(t,e,tb):
-    progname = "compressd"
-    
-    print("ERROR(%s): sysexception called; preparing an email..." % (nowstr()))
-    filename = "/tmp/%s-email-%d-msg.txt" % (progname, os.getpid())
+def completionEmail(doc):
+    print("INFO(%s): preparing a compression-done email..." % (nowstr()))
+    filename = "/tmp/%s-compression-done-email-%d-msg.txt" % (PROGNAME, os.getpid())
     print('TRACE(%s): trace 1' % nowstr())
     f = open(filename, "w")
     print('TRACE(%s): trace 2' % nowstr())
@@ -343,12 +353,36 @@ def sysexception(t,e,tb):
     print("INFO(%s): To: j.cicchiello@ieee.org" % (nowstr()))
     f.write("From: jcicchiello@ptd.net\n")
     print("INFO(%s): From: jcicchiello@ptd.net" % (nowstr()))
-    f.write("Subject: "+progname+".py has crashed!?!?\n")
-    print("INFO(%s): Subject: %s has crashed!?!?" % (nowstr(), progname))
+    f.write("Subject: "+PROGNAME+".py has finished a compression!\n")
+    print("INFO(%s): Subject: %s has finished a compression!" % (nowstr(), PROGNAME))
+    f.write("INFO(%s): \n" % (nowstr()))
+    print("INFO(%s): " % (nowstr()))
+    f.write("INFO(%s): completion record: %s\n" % (nowstr(), json.dumps(doc.indent=3)))
+    print("INFO(%s): completion record: %s" % (nowstr(), json.dumps(doc,indent=3)))
+    f.write("INFO(%s): \n" % (nowstr()))
+    print("INFO(%s): " % (nowstr()))
+    f.close()
+    with open(filename, 'r') as infile:
+        subprocess.Popen(['/usr/sbin/ssmtp', 'j.cicchiello@gmail.com'],
+                         stdin=infile, stdout=sys.stdout, stderr=sys.stderr)
+
+    
+def sysexception(t,e,tb):
+    print("ERROR(%s): sysexception called; preparing an email..." % (nowstr()))
+    filename = "/tmp/%s-email-%d-msg.txt" % (PROGNAME, os.getpid())
+    print('TRACE(%s): trace 1' % nowstr())
+    f = open(filename, "w")
+    print('TRACE(%s): trace 2' % nowstr())
+    f.write("To: j.cicchiello@ieee.org\n")
+    print("INFO(%s): To: j.cicchiello@ieee.org" % (nowstr()))
+    f.write("From: jcicchiello@ptd.net\n")
+    print("INFO(%s): From: jcicchiello@ptd.net" % (nowstr()))
+    f.write("Subject: "+PROGNAME+".py has crashed!?!?\n")
+    print("INFO(%s): Subject: %s has crashed!?!?" % (nowstr(), PROGNAME))
     f.write("\n")
     print("INFO(%s): " % (nowstr()))
-    f.write(progname+".py has shutdown unexpectedly!\n")
-    print("INFO(%s): %s has shutdown unexpectedly!" % (nowstr(), progname))
+    f.write(PROGNAME+".py has shutdown unexpectedly!\n")
+    print("INFO(%s): %s has shutdown unexpectedly!" % (nowstr(), PROGNAME))
     f.write("\n")
     print("INFO(%s): " % (nowstr()))
     f.write("type 1: ")
