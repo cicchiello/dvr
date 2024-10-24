@@ -124,18 +124,32 @@ def fetchUncompressedRecordingSet():
     #print("DEBUG(%s): Checking for uncompressed recordings..." % (nowstr()))
     _retryCnt = 5
     while _retryCnt > 0:
-        _rsp = json.loads(requests.get(CAPTURED_URL).text)
-        if 'rows' in _rsp: 
-            return _rsp['rows']  # normal return case
-        else:
+        //print("DEBUG(%s): Checking for uncompressed recordings; url: %s" % (nowstr(),CAPTURED_URL))
+        _passed = True
+        try:
+            _rsp = requests.get(CAPTURED_URL)
+            _jrsp = json.loads(_rsp.text)
+            if 'rows' in _jrsp: 
+                return _jrsp['rows']  # normal return case
+            else:
+                _passed = False
+        except:
+            _passed = False
+            
+        if not _passed:
             _retryCnt -= 1
             if _retryCnt > 0: 
-                print("WARNING(%s): an attempt at retrieving "\
-                      "uncompressedSet failed; retrying..." % (nowstr()))
+                _alertmsg = "WARNING(%s): an attempt at retrieving "\
+                      "uncompressedSet failed; retrying in 60s..." % (nowstr())
+                print(_alertmsg)
+                alertEmail(_alertmsg)
             time.sleep(60)
-            
+
     # only gets here if db not responding properly for 5 minutes
-    print("WARNING(%s): 5 attempts at retrieving uncompressedSet failed" % (nowstr()))
+    _alertmsg = "WARNING(%s): 5 attempts at retrieving" \
+        " uncompressedSet failed" % (nowstr())
+    print(_alertmsg)
+    alertEmail(_alertmsg)
     return [] # let's try to continue; report that there's nothing to do
 
     
@@ -176,12 +190,16 @@ def closeCompression(n, now, fs):
         r = subprocess.check_call(cmdArr)
         print("INFO(%s): return code from mv call: %s" % (nowstr(),r))
     except subprocess.CalledProcessError as e:
-        print("ERROR(%s): subprocess.CalledProcessError: %s" % (nowstr(), e.output))
+        _alertmsg = "ERROR(%s): subprocess.CalledProcessError: %s" % \
+            (nowstr(), e.output)
+        print(_alertmsg)
+        alertEmail(_alertmsg)
         exit()
 
     cleanDesc = cleanDescription(n['description'])
     dstfile = fs+'/library/'+cleanDesc+'.mp4'
-    print("DEBUG(%s): Here's the symlink to establish: %s->%s" % (nowstr(),dstfile,outfile))
+    print("DEBUG(%s): Here's the symlink to establish: %s->%s" %
+          (nowstr(),dstfile,outfile))
     if os.path.isfile(dstfile):
         os.remove(dstfile)
     os.symlink(outfile, dstfile)
@@ -196,7 +214,9 @@ def closeCompression(n, now, fs):
         r = subprocess.check_call(cmdArr)
         print("DEBUG(%s): return code from mv call: %d" % (nowstr(), r))
     except subprocess.CalledProcessError as e:
-        print("ERROR(%s): subprocess.CalledProcessError: %s" % (nowstr(), e.output))
+        _alertmsg = "ERROR(%s): subprocess.CalledProcessError: %s" % \
+            (nowstr(), e.output)
+        print(_alertmsg)
         exit()
 
     id = n['_id']
@@ -214,7 +234,9 @@ def closeCompression(n, now, fs):
        print("INFO(%s): Success" % (nowstr()))
        completionEmail(n)
     else:
-       print("ERROR(%s): Failed: %s" % (nowstr(), r.json()))
+        _alertmsg = "ERROR(%s): Failed: %s" % (nowstr(), r.json())
+        print(_alertmsg)
+        alertEmail(_alertmsg)
 
 
 def revertCompression(n, now, fs):
@@ -230,7 +252,9 @@ def revertCompression(n, now, fs):
     if 'ok' in r.json():
         print("INFO(%s): Success" % (nowstr()))
     else:
-        print("ERROR(%s): Failed: %s" % (nowstr(), r.json()))
+        _alertmsg = "ERROR(%s): Failed: %s" % (nowstr(), r.json())
+        print(_alertmsg)
+        alertEmail(_alertmsg)
 
     
 def heartbeat(n, now):
@@ -247,7 +271,9 @@ def heartbeat(n, now):
         n['_rev'] = r.json()['rev']
     else:
         n['compression-heartbeat'] = prevHeartbeat
-        print("ERROR(%s): Failed: %s" % (nowstr(), json.dumps(r.json(),indent=3)))
+        _alertmsg = "ERROR(%s): Failed: %s" % (nowstr(), json.dumps(r.json(),indent=3))
+        print(_alertmsg)
+        alertEmail(_alertmsg)
     n['_id'] = id
     return n
 
@@ -264,8 +290,8 @@ def compress(n, now, fs):
     id = n['_id']
     url = POST_URL+'/'+id
     del n['_id']
-    print('DEBUG(%s): checking for file: %s' % (nowstr(),fs+'/'+n['file']))
     _path = fs+'/'+n['file']
+    print('DEBUG(%s): checking for file: %s' % (nowstr(),_path))
     if (os.path.isfile(_path)):
         n['compression-start-timestamp'] = now
         n['compressing'] = True;
@@ -276,7 +302,7 @@ def compress(n, now, fs):
         tmpfile = fs+'/compressed/'+id+'.mkv';
         cmdArr = ['/usr/local/bin/ffmpeg','-loglevel','quiet','-i',infile, \
                   '-vf', 'scale=-1:720', '-c:v','libx264','-crf','24','-y',tmpfile];
-        print('INFO(%s): compression cmd to issue: %s' % (nowstr(),cmdArr))
+        print('INFO(%s): compression cmd to issue: %s' % (nowstr(),str(cmdArr)))
         proc = subprocess.Popen(cmdArr, stdout=subprocess.PIPE,
                                 stderr=subprocess.PIPE, shell=False, preexec_fn=preexec_fn)
         
@@ -291,11 +317,15 @@ def compress(n, now, fs):
             activeCompressions.append({'proc':proc,'record':n,'heartbeat':now})
             return proc
         else:
-            print("ERROR(%s): Failed: %s" % (nowstr(), json.dumps(r.json(),ndent=3)))
+            _alertmsg = "ERROR(%s): Failed: %s" % (nowstr(), json.dumps(r.json(),indent=3))
+            print(_alertmsg)
+            alertEmail(_alertmsg)
           
     else:
-        print("WARNING(%s): File not found: %s ; marking as compressed and skipping" %
-              _path, nowstr())
+        _alertmsg = "WARNING(%s): File not found: %s ; marking as "\
+            "compressed and skipping" % (nowstr(), _path)
+        print(_alertmsg)
+        alertEmail(_alertmsg)
         n.pop('compression-start-timestamp', None)
         n.pop('compressing', None)
         n.pop('compression-heartbeat', None)
@@ -306,7 +336,10 @@ def compress(n, now, fs):
         if 'ok' in r.json():
             print("INFO(%s): Success" % (nowstr()))
         else:
-            print("ERROR(%s): Failed: %s" % (nowstr(), json.dumps(r.json(),indent=3)))
+            _alertmsg = "ERROR(%s): Failed: %s" % \
+                (nowstr(), json.dumps(r.json(),indent=3))
+            print(_alertmsg)
+            alertEmail(_alertmsg)
           
     return None
 
@@ -328,8 +361,8 @@ def handleUncompressedRecordingSet(rs, now, fs):
 
 
 def zombieHunt(now):
-    print("INFO(%s): Performing Zombie Hunt" % nowstr())
     #print("DEBUG(%s): Making GET request to: %s" % (nowstr(), COMPRESSING_URL))
+    print("INFO(%s): Performing Zombie Hunt; url: %s" % (nowstr(),COMPRESSING_URL))
     rset = json.loads(requests.get(COMPRESSING_URL).text)['rows']
     #print("DEBUG(%s): there are %d compressing jobs found" % (nowstr(), len(rset)))
     #print("DEBUG(%s): here's rset: %s" % (nowstr(),json.dumps(rset,indent=3)))
@@ -343,12 +376,32 @@ def zombieHunt(now):
     #print("DEBUG(%s): Done Zombie Hunt" % nowstr())
 
 
+def alertEmail(msg):
+    print("INFO(%s): preparing an alert email..." % (nowstr()))
+    filename = "/tmp/%s-alert-email-%d-msg.txt" % (PROGNAME, os.getpid())
+    f = open(filename, "w")
+    f.write("To: j.cicchiello@ieee.org\n")
+    print("INFO(%s): To: j.cicchiello@ieee.org" % (nowstr()))
+    f.write("From: jcicchiello@ptd.net\n")
+    print("INFO(%s): From: jcicchiello@ptd.net" % (nowstr()))
+    f.write("Subject: "+PROGNAME+".py has hit an alert condition!\n")
+    print("INFO(%s): Subject: %s has hit an alert condition!" % (nowstr(), PROGNAME))
+    f.write("INFO(%s): \n" % (nowstr()))
+    print("INFO(%s): " % (nowstr()))
+    f.write("INFO(%s): alert msg: %s\n" % (nowstr(), msg))
+    print("INFO(%s): alert msg: %s" % (nowstr(), msg))
+    f.write("INFO(%s): \n" % (nowstr()))
+    print("INFO(%s): " % (nowstr()))
+    f.close()
+    with open(filename, 'r') as infile:
+        subprocess.Popen(['/usr/sbin/ssmtp', 'j.cicchiello@gmail.com'],
+                         stdin=infile, stdout=sys.stdout, stderr=sys.stderr)
+
+    
 def completionEmail(doc):
     print("INFO(%s): preparing a compression-done email..." % (nowstr()))
     filename = "/tmp/%s-compression-done-email-%d-msg.txt" % (PROGNAME, os.getpid())
-    print('TRACE(%s): trace 1' % nowstr())
     f = open(filename, "w")
-    print('TRACE(%s): trace 2' % nowstr())
     f.write("To: j.cicchiello@ieee.org\n")
     print("INFO(%s): To: j.cicchiello@ieee.org" % (nowstr()))
     f.write("From: jcicchiello@ptd.net\n")
@@ -357,7 +410,7 @@ def completionEmail(doc):
     print("INFO(%s): Subject: %s has finished a compression!" % (nowstr(), PROGNAME))
     f.write("INFO(%s): \n" % (nowstr()))
     print("INFO(%s): " % (nowstr()))
-    f.write("INFO(%s): completion record: %s\n" % (nowstr(), json.dumps(doc.indent=3)))
+    f.write("INFO(%s): completion record: %s\n" % (nowstr(), json.dumps(doc,indent=3)))
     print("INFO(%s): completion record: %s" % (nowstr(), json.dumps(doc,indent=3)))
     f.write("INFO(%s): \n" % (nowstr()))
     print("INFO(%s): " % (nowstr()))
@@ -370,9 +423,7 @@ def completionEmail(doc):
 def sysexception(t,e,tb):
     print("ERROR(%s): sysexception called; preparing an email..." % (nowstr()))
     filename = "/tmp/%s-email-%d-msg.txt" % (PROGNAME, os.getpid())
-    print('TRACE(%s): trace 1' % nowstr())
     f = open(filename, "w")
-    print('TRACE(%s): trace 2' % nowstr())
     f.write("To: j.cicchiello@ieee.org\n")
     print("INFO(%s): To: j.cicchiello@ieee.org" % (nowstr()))
     f.write("From: jcicchiello@ptd.net\n")
@@ -420,7 +471,8 @@ sys.excepthook = sysexception
 
 
 # Let's wait a bit before starting anything that might need the db, in case it's not available yet
-print("INFO(%s): Waiting a bit in case anything's not available yet" % (nowstr()))
+print("INFO(%s): Waiting a bit in case anything's not available yet" %
+      (nowstr()))
 time.sleep(50)
 
 urs = getUncompressedRecordingSet(None)
@@ -432,7 +484,6 @@ while (True):
     now = calendar.timegm(time.gmtime())
 
     if (len(activeCompressions) < MAX_COMPRESSIONS):
-        print("INFO(%s): looking for recording to compress..." % (nowstr()))
         urs = handleUncompressedRecordingSet(urs, now, dvr_fs)
 
     time.sleep(50)
