@@ -124,7 +124,7 @@ def fetchUncompressedRecordingSet():
     #print("DEBUG(%s): Checking for uncompressed recordings..." % (nowstr()))
     _retryCnt = 5
     while _retryCnt > 0:
-        //print("DEBUG(%s): Checking for uncompressed recordings; url: %s" % (nowstr(),CAPTURED_URL))
+        #print("DEBUG(%s): Checking for uncompressed recordings; url: %s" % (nowstr(),CAPTURED_URL))
         _passed = True
         try:
             _rsp = requests.get(CAPTURED_URL)
@@ -300,9 +300,14 @@ def compress(n, now, fs):
         #spawn the compression job
         infile = _path
         tmpfile = fs+'/compressed/'+id+'.mkv';
-        cmdArr = ['/usr/local/bin/ffmpeg','-loglevel','quiet','-i',infile, \
-                  '-vf', 'scale=-1:720', '-c:v','libx264','-crf','24','-y',tmpfile];
-        print('INFO(%s): compression cmd to issue: %s' % (nowstr(),str(cmdArr)))
+        cmdArr = ['/usr/local/bin/ffmpeg', '-loglevel', 'quiet', '-i', infile, \
+                  '-ss', '2', '-vf', 'scale=-1:720', '-c:v','libx264', \
+                  '-crf','24','-y',tmpfile];
+        
+        _alertmsg = 'INFO(%s_: issuing compression cmd: %s' % (nowstr(), str(cmdArr))
+        print(_alertmsg)
+        alertEmail(_alertmsg)
+        
         proc = subprocess.Popen(cmdArr, stdout=subprocess.PIPE,
                                 stderr=subprocess.PIPE, shell=False, preexec_fn=preexec_fn)
         
@@ -500,7 +505,9 @@ while (True):
                 print('INFO(%s): The compression job for %s completed successfully' % (nowstr(), id))
                 closeCompression(n, now, dvr_fs);
             else:
-                print('INFO(%s): The compression job for %s failed' % (nowstr(), id))
+                _alertmsg = 'WARNING(%s): The compress job for %s failed' % (nowstr(), id)
+                print(_alertmsg)
+                alertEmail(_alertmsg)
                 print('INFO(%s): the subprocess returncode is %s' % (nowstr(), proc.returncode))
                 print('INFO(%s): Reverting the compression record' % (nowstr()))
                 revertCompression(n, now, dvr_fs);
