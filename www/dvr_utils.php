@@ -190,7 +190,10 @@ function renderEntryInfo($id)
    $actualStartStr = date("h:i a",$actualStart);
    $actualEnd = $detail['capture-stop-timestamp'];
    $file = $detail['file'];
-   $isCompressed = $detail['is-compressed'];
+   $isCompressed = false;
+   if( isset( $detail['is-compressed'] ) ) {
+      $isCompressed = $detail['is-compressed'];
+   }
 
    $url = "http://ipv4-api.hdhomerun.com/discover";
    $devices = json_decode(file_get_contents($url), true);
