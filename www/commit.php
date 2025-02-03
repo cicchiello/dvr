@@ -1,4 +1,15 @@
 <!DOCTYPE html>
+
+<?php
+    // intentionally place this before the html tag
+
+    // Uncomment to see php errors
+    //ini_set('display_errors', 1);
+    //ini_set('display_startup_errors', 1);
+    //error_reporting(E_ALL);
+
+  ?>
+
 <html>
   
   <head>
@@ -66,6 +77,8 @@
 	    
 	       $lineupJson = json_decode(file_get_contents($lineupJsonUrl), true);
 	       $numChannels += sizeof($lineupJson);
+	       
+	       $recordingsUrl = $DbViewBase.'/recordings';
 	       $numRecordings += json_decode(file_get_contents($recordingsUrl), true)['total_rows'];
 
 	       $scheduledUrl = $DbViewBase.'/scheduled';
@@ -76,7 +89,6 @@
 	  ?>
 	  
   <body class="bg" onload="init()">
-
     <div class="menuArea">
       <div id="menuItems" class="w3-show">
 	<a class="_URL" href="./index.php">
