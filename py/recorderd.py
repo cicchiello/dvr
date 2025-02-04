@@ -355,9 +355,9 @@ def heartbeat(n, now):
 
 
 def zombieHunt(now):
-    print("INFO(%s): On a zombie hunt!" % (nowstr()))
+    #print("INFO(%s): On a zombie hunt!" % (nowstr()))
     rset = json.loads(requests.get(CAPTURING_URL).text)['rows']
-    print("DEBUG(%s): there are %d capture jobs found" % (nowstr(), len(rset)))
+    #print("DEBUG(%s): there are %d capture jobs found" % (nowstr(), len(rset)))
     for i in range(0, len(rset)):
         n = rset[i]['value']
         hasHeartbeat = 'capture-heartbeat' in n
