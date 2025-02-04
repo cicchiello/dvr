@@ -15,6 +15,7 @@ import sys
 import configparser
 
 PROGNAME = "compressd"
+EMAIL = "/usr/bin/msmtp"
 
 MAX_COMPRESSIONS=1
 
@@ -367,7 +368,7 @@ def handleUncompressedRecordingSet(rs, now, fs):
 
 def zombieHunt(now):
     #print("DEBUG(%s): Making GET request to: %s" % (nowstr(), COMPRESSING_URL))
-    print("INFO(%s): Performing Zombie Hunt; url: %s" % (nowstr(),COMPRESSING_URL))
+    #print("INFO(%s): Performing Zombie Hunt; url: %s" % (nowstr(),COMPRESSING_URL))
     rset = json.loads(requests.get(COMPRESSING_URL).text)['rows']
     #print("DEBUG(%s): there are %d compressing jobs found" % (nowstr(), len(rset)))
     #print("DEBUG(%s): here's rset: %s" % (nowstr(),json.dumps(rset,indent=3)))
@@ -399,7 +400,7 @@ def alertEmail(msg):
     print("INFO(%s): " % (nowstr()))
     f.close()
     with open(filename, 'r') as infile:
-        subprocess.Popen(['/usr/sbin/ssmtp', 'j.cicchiello@gmail.com'],
+        subprocess.Popen([EMAIL, 'j.cicchiello@gmail.com'],
                          stdin=infile, stdout=sys.stdout, stderr=sys.stderr)
 
     
@@ -421,7 +422,7 @@ def completionEmail(doc):
     print("INFO(%s): " % (nowstr()))
     f.close()
     with open(filename, 'r') as infile:
-        subprocess.Popen(['/usr/sbin/ssmtp', 'j.cicchiello@gmail.com'],
+        subprocess.Popen([EMAIL, 'j.cicchiello@gmail.com'],
                          stdin=infile, stdout=sys.stdout, stderr=sys.stderr)
 
     
@@ -466,7 +467,7 @@ def sysexception(t,e,tb):
     print("INFO(%s): " % (nowstr()))
     f.close()
     with open(filename, 'r') as infile:
-        subprocess.Popen(['/usr/sbin/ssmtp', 'j.cicchiello@gmail.com'],
+        subprocess.Popen([EMAIL, 'j.cicchiello@gmail.com'],
                          stdin=infile, stdout=sys.stdout, stderr=sys.stderr)
     traceback.print_tb(tb)
     exit()
@@ -482,8 +483,11 @@ time.sleep(50)
 
 urs = getUncompressedRecordingSet(None)
 now = calendar.timegm(time.gmtime())
+
+print("INFO(%s): Performing an initial Zombie Hunt; url: %s" % (nowstr(),COMPRESSING_URL))
 zombieTimestamp = now
 zombieHunt(zombieTimestamp)
+
 print("INFO(%s): Entering main loop" % (nowstr()))
 while (True):
     now = calendar.timegm(time.gmtime())

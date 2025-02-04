@@ -26,4 +26,5 @@ echo "ERROR(compressd-startup.bsh:${d}): see /home/pi/logs/dvr-compressd.log for
 echo "${d}: see /home/pi/logs/dvr-compressd.log for info" >> /home/pi/logs/dvr-compressd-startup.log
 echo "ERROR(compressd-startup.bsh:${d})" >> /tmp/compressd-startup-msg.txt
 echo "" >> /tmp/compressd-startup-msg.txt
-mail -s "compressd.py has crashed!" j.cicchiello@ieee.org < /tmp/compressd-startup-msg.txt
+cat /tmp/compressed-startup-msg.txt | msmtp j.cicchiello@ieee.org
+#mail -s "compressd.py has crashed!" j.cicchiello@ieee.org < /tmp/compressd-startup-msg.txt
