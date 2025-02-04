@@ -11,8 +11,10 @@ import time
 import datetime
 import sys
 import configparser
+import traceback
 from copy import deepcopy
 
+PROGNAME = "recorderd"
 
 ZOMBIE_HUNT_RATE_MIN=60
 
@@ -78,6 +80,7 @@ VIEW_BASE = DbBase+'/'+Db+'/_design/dvr/_view/'
 SCHEDULE_URL = VIEW_BASE+'scheduled'
 CAPTURING_URL = VIEW_BASE+'capturing'
 
+retryCnt = 0
 activeCaptures=[]
 
 def cleanDescription(d):
@@ -90,7 +93,30 @@ def cleanDescription(d):
     return cleanedDescription
     
 def fetchScheduledSet():
-    return json.loads(requests.get(SCHEDULE_URL).text)
+    _haveResponse = False
+    retryCnt = 0
+    while (not _haveResponse and (retryCnt < 5)):
+        _text = requests.get(SCHEDULE_URL).text
+        _resultSet = json.loads(_text)
+        if ('error' in _resultSet):
+            retryCnt += 1
+            if retryCnt < 5:
+                _alertmsg = "WARNING(%s): ScheduleSet query failed; retrying\n" % nowstr()
+                _alertmsg += _text
+                print(_alertmsg)
+                alertEmail(_alertmsg)
+            time.sleep(10)
+        else:
+            _haveResponse = True
+            retryCnt = 0
+
+    if retryCnt == 5:
+        _alertmsg = "WARNING(%s): Couldn't retrieve ScheduledSet after 5 tries" % nowstr()
+        print(_alertmsg)
+        alertEmail(_alertmsg)
+        return None
+    else:
+        return _resultSet
 
     
 def fetchCapturingSet():
@@ -194,7 +220,10 @@ def getCapturingSet(prev):
 def handleMissedSchedules(rs, now):
     missedCompletely = selectNextMissedEnd(rs, now)
     while (missedCompletely != None):
-        print("INFO(%s): Found one that I missed completely!" % (nowstr()))
+        _alertmsg = "WARNING(%s): Found a schedule item that I missed completely! %s" % \
+            (nowstr(), json.dumps(missedCompletely))
+        print(_alertmsg)
+        alertEmail(_alertmsg)
         missedCompletely['type'] = 'error'
         missedCompletely['errmsg'] = 'schedule missed completely'
         missedCompletely['missed-timestamp'] = str(now)
@@ -211,8 +240,11 @@ def invoke(n, fs):
     id = n['_id']
     url = n['url']
     cmdArr = ['/usr/bin/curl','-X','GET',url,'-s','-i','-o',fs+'/raw/'+id+'.mp4'];
-    print("INFO(%s): cmd: %s" % (nowstr(), cmdArr))
+    _alertmsg = "INFO(%s): creating subporcess; cmd: %s" % (nowstr(), cmdArr)
+    print(_alertmsg)
+    alertEmail(_alertmsg)
     return subprocess.Popen(cmdArr, shell=False)
+
 
 def startCapture(n, now, fs):
     global activeCaptures
@@ -224,7 +256,8 @@ def startCapture(n, now, fs):
     n['pid'] = proc.pid
     n['file'] = 'raw/'+id+'.mp4'
     del n['_id']
-    print("INFO(%s): Here's the update I'm going to make: %s" % (nowstr(), json.dumps(n,indent=3)))
+    print("INFO(%s): Here's the update I'm going to make: %s" % \
+          (nowstr(), json.dumps(n,indent=3)))
     url = POST_URL+'/'+id
     r = requests.put(url, auth=DbWriteAuth, json=n)
     n['_id'] = id
@@ -250,8 +283,10 @@ def stopCapture(s, now):
         else:
             newActiveCaptures.append(x)
     activeCaptures = newActiveCaptures
-    print("DEBUG(%s): activeCaptures after removing completed capture: %s" % (nowstr(), json.dumps(activeCaptures, indent=3)))
-    print("DEBUG(%s): s after shutting down process: %s" % (nowstr(), json.dumps(s, indent=3)))
+    print("DEBUG(%s): activeCaptures after removing completed capture: %s" % \
+          (nowstr(), json.dumps(activeCaptures, indent=3)))
+    print("DEBUG(%s): s after shutting down process: %s" % \
+          (nowstr(), json.dumps(s, indent=3)))
             
     id = s['_id']
     hasHeartbeat = 'capture-heartbeat' in s
@@ -261,7 +296,8 @@ def stopCapture(s, now):
     s.pop('capture-heartbeat', None)
     s['type'] = 'recording'
 
-    print("INFO(%s): Here's the update I'm going to make: %s" % (nowstr(), json.dumps(s,indent=3)))
+    print("INFO(%s): Here's the update I'm going to make: %s" % \
+          (nowstr(), json.dumps(s,indent=3)))
     url = POST_URL+'/'+id
     r = requests.put(url, auth=DbWriteAuth, json=s)
     
@@ -274,7 +310,8 @@ def stopCapture(s, now):
 def handleLateStarts(rs, now, fs):
     late = selectNextMissedStart(rs, now)
     while (late != None):
-        print("INFO(%s): Found a schedule that should have started already!  Starting now." % (nowstr()))
+        print("INFO(%s): Found a schedule that should have started already!  Starting now." %\
+              (nowstr()))
         startCapture(late, now, fs)
         rs = fetchScheduledSet()
         late = selectNextMissedStart(rs, now)
@@ -284,7 +321,8 @@ def handleLateStarts(rs, now, fs):
 def handleNextStart(rs, now, fs):
     n = selectNextStart(rs, now)
     while (n != None):
-        print("INFO(%s): Found a schedule due to start within a minute; starting it now" % (nowstr()))
+        print("INFO(%s): Found a schedule due to start within a minute; starting it now" % \
+              (nowstr()))
         startCapture(n, now, fs)
         rs = fetchScheduledSet()
         n = selectNextStart(rs, now)
@@ -294,7 +332,8 @@ def handleNextStart(rs, now, fs):
 def handleNextStop(crs, now):
     s = selectNextStop(crs, now)
     while (s != None):
-        print("INFO(%s): Found an active capture that should be stopped: %s" % (nowstr(), json.dumps(s,indent=3)))
+        print("INFO(%s): Found an active capture that should be stopped: %s" % \
+              (nowstr(), json.dumps(s,indent=3)))
         stopCapture(s, now)
         crs = fetchCapturingSet()
         s = selectNextStop(crs, now)
@@ -316,10 +355,9 @@ def heartbeat(n, now):
 
 
 def zombieHunt(now):
-    print("INFO(%s): On a zombie hunt!" % (nowstr()))
-    print("INFO(%s): Here's the url: %s" % (nowstr(), CAPTURING_URL))
+    #print("INFO(%s): On a zombie hunt!" % (nowstr()))
     rset = json.loads(requests.get(CAPTURING_URL).text)['rows']
-    print("DEBUG(%s): there are %d capture jobs found" % (nowstr(), len(rset)))
+    #print("DEBUG(%s): there are %d capture jobs found" % (nowstr(), len(rset)))
     for i in range(0, len(rset)):
         n = rset[i]['value']
         hasHeartbeat = 'capture-heartbeat' in n
@@ -334,8 +372,35 @@ def zombieHunt(now):
             n.pop('capture-heartbeat', None)
             n['type'] = 'error';
             n['errmsg']  = 'identified as capture-zombie';
-            print("INFO(%s): Found a zombie!  Here's the update I'm going to make: %s" % (nowstr(), json.dumps(n,indent=3)))
+
+            _alertmsg = "WARNING(%s): Found a zombie!  Here's the db update to make: %s" % \
+                (nowstr(), json.dumps(n,indent=3))
+            print(_alertmsg)
+            alertEmail(_alertmsg)
             r = requests.put(url, auth=DbWriteAuth, json=n)
+
+
+def alertEmail(msg):
+    print("INFO(%s): preparing an alert email..." % (nowstr()))
+    filename = "/tmp/%s-alert-email-%d-msg.txt" % (PROGNAME, os.getpid())
+    f = open(filename, "w")
+    f.write("To: j.cicchiello@ieee.org\n")
+    print("INFO(%s): To: j.cicchiello@ieee.org" % (nowstr()))
+    f.write("From: jcicchiello@ptd.net\n")
+    print("INFO(%s): From: jcicchiello@ptd.net" % (nowstr()))
+    f.write("Subject: "+PROGNAME+".py has hit an alert condition!\n")
+    print("INFO(%s): Subject: %s has hit an alert condition!" % (nowstr(), PROGNAME))
+    f.write("INFO(%s): \n" % (nowstr()))
+    print("INFO(%s): " % (nowstr()))
+    f.write("INFO(%s): alert msg: %s\n" % (nowstr(), msg))
+    print("INFO(%s): alert msg: %s" % (nowstr(), msg))
+    f.write("INFO(%s): \n" % (nowstr()))
+    print("INFO(%s): " % (nowstr()))
+    f.close()
+    time.sleep(5)
+    with open(filename, 'r') as infile:
+        subprocess.Popen(['/usr/bin/msmtp', 'j.cicchiello@gmail.com'],
+                         stdin=infile, stdout=sys.stdout, stderr=sys.stderr)
 
 
 def sysexception(t,e,tb):
@@ -343,9 +408,7 @@ def sysexception(t,e,tb):
 
     print("ERROR(%s): sysexception called; preparing an email..." % (nowstr()))
     filename = "/tmp/%s-email-%d-msg.txt" % (progname, os.getpid())
-    print('TRACE(%s): trace 1' % nowstr())
     f = open(filename, "w")
-    print('TRACE(%s): trace 2' % nowstr())
     f.write("To: j.cicchiello@ieee.org\n")
     print("INFO(%s): To: j.cicchiello@ieee.org" % (nowstr()))
     f.write("From: jcicchiello@ptd.net\n")
@@ -376,14 +439,14 @@ def sysexception(t,e,tb):
     f.write(str(tb))
     f.write("\n")
     f.write("traceback.print_exception(etype,value,tb): ")
-    tb.print_exception(t,e,tb,f);
+    f.write(str(traceback.format_exception(t, e, tb)))
     f.write("\n")
     print("INFO(%s): " % (nowstr()))
     f.write("\n")
     print("INFO(%s): " % (nowstr()))
     f.close()
     with open(filename, 'r') as infile:
-        subprocess.Popen(['/usr/sbin/ssmtp', 'j.cicchiello@gmail.com'],
+        subprocess.Popen(['/usr/bin/msmtp', 'j.cicchiello@gmail.com'],
                          stdin=infile, stdout=sys.stdout, stderr=sys.stderr)
     traceback.print_tb(tb)
     exit()

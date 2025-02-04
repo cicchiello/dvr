@@ -1,4 +1,15 @@
 <!DOCTYPE html>
+
+<?php
+    // intentionally place this before the html tag
+
+    // Uncomment to see php errors
+    //ini_set('display_errors', 1);
+    //ini_set('display_startup_errors', 1);
+    //error_reporting(E_ALL);
+
+  ?>
+
 <html>
   <head>
   
@@ -47,19 +58,17 @@
      $url = "http://ipv4-api.hdhomerun.com/discover";
      $devices = json_decode(file_get_contents($url), true);
 
-     $numChannels = 0;
      $lineupJson = 0;
      foreach ($devices as $device) {
         $device_detail = json_decode(file_get_contents($device['DiscoverURL']), true);
         $lineupJsonUrl = $device_detail['LineupURL'];
 	
         $lineupJson = json_decode(file_get_contents($lineupJsonUrl), true);
-        $numChannels += sizeof(json_decode(file_get_contents($lineupJson), true));
      }
   ?>
 
   <body class="bg">
-     <p id="result"></p>
+    <p id="result"></p>
      <form action="channelClick()">
         <table style="width:100%; overflow:scroll">
            <?php
