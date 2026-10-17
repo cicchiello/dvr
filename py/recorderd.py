@@ -63,6 +63,7 @@ DbKey = config[mode]['DbKey']
 DbPswd = config[mode]['DbPswd']
 Db = config[mode]['Db']
 DbWriteAuth = None if (not (DbKey and DbPswd)) else (DbKey,DbPswd)
+WebFsRoot = config[mode]['WebFsRoot']
     
 print("INFO(%s): Mode: %s" % (nowstr(), mode))
 print("INFO(%s): Using dvr-filesystem root: %s" % (nowstr(), dvr_fs))
@@ -91,7 +92,12 @@ def cleanDescription(d):
             c = 'X'
         cleanedDescription += c
     return cleanedDescription
-    
+
+
+def uniqueBasename(cleanDesc, ts):
+    return "%s.%d.mp4" % (cleanDesc, ts)
+
+
 def fetchScheduledSet():
     _haveResponse = False
     retryCnt = 0
@@ -237,13 +243,30 @@ def handleMissedSchedules(rs, now):
 
 
 def invoke(n, fs):
-    id = n['_id']
-    url = n['url']
-    cmdArr = ['/usr/bin/curl','-X','GET',url,'-s','-i','-o',fs+'/raw/'+id+'.mp4'];
-    _alertmsg = "INFO(%s): creating subporcess; cmd: %s" % (nowstr(), cmdArr)
-    print(_alertmsg)
-    alertEmail(_alertmsg)
-    return subprocess.Popen(cmdArr, shell=False)
+    # issue the curl command to capture the stream
+
+    try: 
+        # first, consider the possibility that the HDHomeRun has moved since
+        # the recording was scheduled
+        _text = requests.get("http://ipv4-api.hdhomerun.com/discover").text
+        _discover = json.loads(_text)
+        n['url'] = "%s:5004/auto/v%s" % (_discover[0]['BaseURL'], n['channel'])
+
+        # the spawn the command to capture the stream
+        _prg = '/usr/bin/curl'
+        _path = '%s/raw/%s.mp4' % (fs, n['_id'])
+        cmdArr = [_prg,'-X','GET', n['url'],'-s','-i','-o', _path ]
+        _alertmsg = "INFO(%s): creating subprocess; cmd: %s" % (nowstr(), cmdArr)
+        print(_alertmsg)
+        alertEmail(_alertmsg)
+        pid = subprocess.Popen(cmdArr, shell=False)
+        
+    except Exception as e:
+        print("ERROR(%s): invoke failed; %s" % (nowstr(), str(e)))
+        errorEmail(msg="invoke failed; %s" % str(e.output))
+        exit()
+        
+    return pid
 
 
 def startCapture(n, now, fs):
@@ -300,11 +323,41 @@ def stopCapture(s, now):
           (nowstr(), json.dumps(s,indent=3)))
     url = POST_URL+'/'+id
     r = requests.put(url, auth=DbWriteAuth, json=s)
+    if 'ok' in r.json():
+        print("INFO(%s): Success" % (nowstr()))
+#        completionEmail(n)
+    else:
+        print("ERROR(%s): Failed: %s" % (nowstr(), r.json()))
+        errorEmail(msg=json.dumps(s,indent=3))
+
+    basename = uniqueBasename(cleanDescription(s['description']), s['record-start'])
+#    dst = dvr_fs+'/library/'+basename
+#    src = dvr_fs+'/'+s['file']
+
+    # in case an earlier run failed before completion
+    if os.path.isfile(dvr_fs+'/library/'+basename):
+        os.remove(dvr_fs+'/library/'+basename)
+        
+    canonicalPath = "%s/%s" % (WebFsRoot, s['file'])
+    cmdstr = 'cd %s/library && ln -s %s "%s"' % (dvr_fs, canonicalPath, basename)
+    print('DEBUG(%s): Here is the symlink cmd to exec: %s' % (nowstr(), cmdstr))
     
-    dst = dvr_fs+'/library/'+cleanDescription(s['description'])+'.mp4'
-    src = dvr_fs+'/'+s['file']
-    print("DEBUG(%s): Here's the symlink to establish: %s->%s" % (nowstr(), dst, src))
-    os.symlink(src, dst)
+#    print("DEBUG(%s): Here's the symlink to establish: %s->%s" % (nowstr(), dst, src))
+#    if os.path.isfile(dvr_fs+'/library/'+basename):
+#        os.remove(dvr_fs+'/library/'+basename)
+#    os.symlink(src, dst)
+
+    try:
+        subprocess.check_call(cmdstr, shell=True)
+        print("INFO(%s): Success" % (nowstr()))
+    except subprocess.CalledProcessError as e:
+        print("ERROR(%s): symlink; subprocess.CalledProcessError: %s" %
+              (nowstr(), e.output))
+        errorEmail(msg="symlink error; subprocess.CalledProcessError: %s" %
+                   e.output)
+        exit()
+    
+
 
     
 def handleLateStarts(rs, now, fs):
@@ -346,11 +399,22 @@ def heartbeat(n, now):
     url = POST_URL+'/'+id
     del n['_id']
     n['capture-heartbeat'] = now
+    
     print("DEBUG(%s): Updating the db heartbeat" % (nowstr()))
-    r = requests.put(url, auth=DbWriteAuth, json=n)
-    n['_id'] = id
-    n['_rev'] = r.json()['rev']
-    return n
+    try:
+        r = requests.put(url, auth=DbWriteAuth, json=n)
+    except Exception as e:
+        print("ERROR(%s): error PUTting heartbeat: %s" % (nowstr(), json.dumps(n)))
+        return None
+
+    try: 
+        n['_id'] = id
+        n['_rev'] = r.json()['rev']
+        return n
+    except Exception as e:
+        print("ERROR(%s): error parsing heartbeat PUT response: %s" % (nowstr(), str(r)))
+        return None
+        
 
 
 
@@ -481,7 +545,12 @@ while (True):
         if (now > hb+60):
             n = heartbeat(n, now)
             capture['heartbeat'] = now
-            capture['record'] = n
+            
+            # n could be None if the heartbeat PUT failed...
+            # if so, let's try to continue by not overwriting previous value
+            if n:
+                capture['record'] = n
+                
         newCaptures.append(capture)
     activeCaptures = newCaptures
         

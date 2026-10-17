@@ -121,6 +121,8 @@ function getMenuCnts()
 
 function renderRecordingsTable($items, $actions)
 {
+   date_default_timezone_set('America/New_York'); // Change to your desired timezone
+   
    $result = '';
    $cnt = 0;
    foreach ($items as $item) {
@@ -276,41 +278,43 @@ function renderEntryInfo($id)
       $showDbId = true;
    }
 
-   // Uncomment the following to show the path to the selected file
+   // Show the path to the selected file
    $result .= '	 <tr>';
-   $result .= '	   <td>'.($isCompressed ? 'Compressed ':'').'File:</td>';
-   $result .= '	   <td colspan="2">';
-   $result .= '<b style="color:blue" class="w3-right">'.$file;
-   $result .= '       </b>';
+   $result .= '	   <td style="font-size: 80%">'.($isCompressed ? 'Compressed ':'').'File:</td>';
+   $result .= '	   <td> </td>';
+   $result .= '	   <td colspan="2" style="color:blue; font-size:80%">'.$file;
    $result .= '	   </td>';
    $result .= '	 </tr>';
    
    $fileExists = file_exists($file);
    $result .= '	 <tr>';
    if ($fileExists) {
-      $result .= '	   <td>'.($isCompressed ? 'Compressed ':'').'File size:</td>';
-      $result .= '	   <td colspan="2">';
-      $result .= '<b style="color:blue" class="w3-right">'.readableSize(realFileSize($file));
+      $result .= '	   <td style="font-size: 80%">';
+      $result .= '           '.($isCompressed ? 'Compressed ':'').'File size:';
+      $result .= '         </td>';
+      $result .= '	   <td> </td>';
+      $result .= '	   <td colspan="2" style="color:blue; font-size:80%" class="w3-right">';
+      $result .= '           '.readableSize(realFileSize($file));
+      $result .= '	   </td>';
    } else {
       $result .= '	   <td>File not found:</td>';
-      $result .= '	   <td colspan="2">';
-      $result .= '<b style="color:red; font-size:80%;" class="w3-right">'.$file;
+      $result .= '	   <td colspan="2" style="color:red; font-size:80%;" class="w3-right">';
+      $result .= '           '.$file;
+      $result .= '	   </td>';
       $showDbId = true;
    }
-   $result .= '       </b>';
-   $result .= '	   </td>';
    $result .= '	 </tr>';
 
    $showDbId = true;
    if ($showDbId) {
       $result .= '  <tr>';
-      $result .= '    <td>Db Id:</td>';
+      $result .= '    <td style="font-size: 80%">Db Id:</td>';
       $result .= '    <td colspan="2">';
       $result .= '       <p style="color:blue; font-size:80%" class="w3-right">'.$id.'</p>';
       $result .= '    </td>';
       $result .= '  </tr>';
-      $result .= '</table>';
    }
+   $result .= '</table>';
    
    return $result;
 }
