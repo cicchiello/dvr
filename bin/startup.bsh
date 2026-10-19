@@ -1,38 +1,59 @@
 #!/bin/bash
 
+usage() {
+    echo "Usage: $0 [-c|--compress] [-r|--record] [-h|--help]"
+    exit 1
+}
+
+# Initialize variables with default values
+DO_RECORD=false
+DO_COMPRESS=false
+
+# Loop through all arguments
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        -c|--compress)
+            DO_COMPRESS=true
+            shift  # Past flag
+            ;;
+        -r|--record)
+            DO_RECORD=true
+            shift  # Past flag
+            ;;
+        -h|--help)
+            usage
+            ;;
+        *)
+            echo "Unknown option: $1"
+            usage
+            ;;
+    esac
+done
+
+
+bindir=$(cd -- "$(dirname -- "${0}")" && pwd)
+basedir=$(dirname -- "${bindir}")
+username=$(basename $(dirname -- "${basedir}"))
+
 d=$(date)
 /bin/echo "${d}: startup.bsh invoked; waiting for 10s..." >> /home/pi/logs/dvr-startup.log
 sleep 10
 
-basedir=$(dirname "${0}")
 who=$(whoami)
 d=$(date)
 host=$(hostname)
-echo "${d}: whoami returned \"${who}\"" >> /home/pi/logs/dvr-startup.log
-echo "${d}: hostname returned \"${host}\"" >> /home/pi/logs/dvr-startup.log
-d=$(date)
-echo "${d}: invoking compressd.py and recorderd.py..." >> /home/pi/logs/dvr-startup.log
-echo "${d}: invoking compressd.py" >> /home/pi/logs/dvr-compressd.log
-python3 -u /home/pi/dvr/py/compressd.py -ini /home/pi/dvr/py/config.ini -mode prod >> /home/pi/logs/dvr-compressd.log &
-echo "${d}: invoking recorderd.py" >> /home/pi/logs/dvr-recorderd.log
-python3 -u /home/pi/dvr/py/recorderd.py -ini /home/pi/dvr/py/config.ini -mode prod >> /home/pi/logs/dvr-recorderd.log
-d=$(date)
-echo "${d}: recorder.py shutdown" >> /home/pi/logs/dvr-startup.log
-echo "${d}: sending email" >> /home/pi/logs/dvr-startup.log
+dvrlog="/home/${username}/logs/dvr-startup.log"
+echo "${d}: whoami returned \"${who}\"" >> "${dvrlog}"
+echo "${d}: hostname returned \"${host}\"" >> "${dvrlog}"
 
-echo "To: j.cicchiello@ieee.org" > /tmp/msg.txt
-echo "${d}: To: j.cicchiello@ieee.org" >> /home/pi/logs/dvr-startup.log
-echo "From: jcicchiello@ptd.net" >> /tmp/msg.txt
-echo "${d}: From: jcicchiello@ptd.net" >> /home/pi/logs/dvr-startup.log
-echo "Subject: recorderd.py has crashed!?!?!" >> /tmp/msg.txt
-echo "${d}: Subject: recorderd.py has crashed!?!?!" >> /home/pi/logs/dvr-startup.log
-echo "" >> /tmp/msg.txt
-echo "${d}: " >> /home/pi/logs/dvr-startup.log
-echo "recorderd.py has shutdown unexpectedly!" >> /tmp/msg.txt
-echo "${d}: recorderd.py has shutdown unexpectedly!" >> /home/pi/logs/dvr-startup.log
-echo "see /home/pi/logs/dvr-recorderd.log for info" >> /tmp/msg.txt
-echo "${d}: see /home/pi/logs/dvr-recorderd.log for info" >> /home/pi/logs/dvr-startup.log
-echo $(date) >> /tmp/msg.txt
-echo "" >> /tmp/msg.txt
-ssmtp j.cicchiello@gmail.com < /tmp/msg.txt
+d=$(date)
+if [[ "${DO_COMPRESS}" == "true" ]]; then
+    "${basedir}/bin/launch-compressd.bsh" &
+fi
+
+d=$(date)
+if [[ "${DO_RECORD}" == "true" ]]; then
+    "${basedir}/bin/launch-recorderd.bsh" &
+fi
+
 

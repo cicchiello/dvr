@@ -325,14 +325,11 @@ def stopCapture(s, now):
     r = requests.put(url, auth=DbWriteAuth, json=s)
     if 'ok' in r.json():
         print("INFO(%s): Success" % (nowstr()))
-#        completionEmail(n)
     else:
         print("ERROR(%s): Failed: %s" % (nowstr(), r.json()))
         errorEmail(msg=json.dumps(s,indent=3))
 
     basename = uniqueBasename(cleanDescription(s['description']), s['record-start'])
-#    dst = dvr_fs+'/library/'+basename
-#    src = dvr_fs+'/'+s['file']
 
     # in case an earlier run failed before completion
     if os.path.isfile(dvr_fs+'/library/'+basename):
@@ -342,11 +339,6 @@ def stopCapture(s, now):
     cmdstr = 'cd %s/library && ln -s %s "%s"' % (dvr_fs, canonicalPath, basename)
     print('DEBUG(%s): Here is the symlink cmd to exec: %s' % (nowstr(), cmdstr))
     
-#    print("DEBUG(%s): Here's the symlink to establish: %s->%s" % (nowstr(), dst, src))
-#    if os.path.isfile(dvr_fs+'/library/'+basename):
-#        os.remove(dvr_fs+'/library/'+basename)
-#    os.symlink(src, dst)
-
     try:
         subprocess.check_call(cmdstr, shell=True)
         print("INFO(%s): Success" % (nowstr()))
@@ -446,6 +438,8 @@ def zombieHunt(now):
 
 def alertEmail(msg):
     print("INFO(%s): preparing an alert email..." % (nowstr()))
+    return
+
     filename = "/tmp/%s-alert-email-%d-msg.txt" % (PROGNAME, os.getpid())
     f = open(filename, "w")
     f.write("To: j.cicchiello@ieee.org\n")
@@ -531,6 +525,7 @@ srs = getScheduledSet(None)
 crs = getCapturingSet([])
 print("INFO(%s): Entering main loop" % (nowstr()))
 while (True):
+    print("TRACE: main loop iteration")
     now = calendar.timegm(time.gmtime())
     srs = handleMissedSchedules(srs, now)
     srs = handleLateStarts(srs, now, dvr_fs)

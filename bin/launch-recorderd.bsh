@@ -1,0 +1,48 @@
+#!/bin/bash
+
+bindir=$(cd -- "$(dirname -- "${0}")" && pwd)
+basedir=$(dirname -- "${bindir}")
+username=$(basename $(dirname -- "${basedir}"))
+
+# channge just these depending on the tool being launced
+prog="/home/${username}/dvr/py/recorderd.py"
+proglog="/home/${username}/logs/dvr-recorderd.log"
+
+who=$(whoami)
+d=$(date)
+host=$(hostname)
+echo "${d}: whoami returned \"${who}\"" >> "${dvrlog}"
+echo "${d}: hostname returned \"${host}\"" >> "${dvrlog}"
+
+d=$(date)
+dvrlog="/home/${username}/logs/dvr-startup.log"
+echo "${d}: invoking ${prog} in 10s..." >> "${dvrlog}"
+sleep 10
+
+d=$(date)
+ini="/home/${username}/dvr/py/config.ini"
+echo "${d}: invoking ${prog} in 10s..." >> "${dvrlog}"
+python3 -u "${prog}" -ini "${ini}" -mode prod >> "${proglog}"
+
+# if control reaches here, it means that ${prog} crashed (it's supposed to be a daemon)
+
+echo "${d}: ${prog} shutdown" >> "${dvrlog}"
+echo "${d}: sending email" >> "${dvrlog}"
+
+echo "To: j.cicchiello@ieee.org" > /tmp/msg.txt
+echo "${d}: To: j.cicchiello@gmail.com" >> "${dvrlog}"
+echo "From: jcicchiello@ptd.net" >> /tmp/msg.txt
+echo "${d}: From: jcicchiello@ptd.net" >> "${dvrlog}"
+echo "Subject: ${prog} has crashed!?!?!" >> /tmp/msg.txt
+echo "${d}: Subject: ${prog} has crashed!?!?!" >> "${dvrlog}"
+echo "" >> /tmp/msg.txt
+echo "${d}: " >> "${dvrlog}"
+echo "${prog} has shutdown unexpectedly!" >> /tmp/msg.txt
+echo "${d}: ${prog} has shutdown unexpectedly!" >> "${dvrlog}"
+echo "see ${proglog} for info" >> /tmp/msg.txt
+echo "${d}: see ${proglog} for info" >> "${dvrlog}"
+echo $(date) >> /tmp/msg.txt
+echo "" >> /tmp/msg.txt
+ssmtp j.cicchiello@gmail.com < /tmp/msg.txt
+
+
