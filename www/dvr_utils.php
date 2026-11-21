@@ -87,7 +87,8 @@ function getMenuCnts()
    $DbViewBase = $DbBase.'/'.$Db.'/_design/dvr/_view';
 
    $url = "http://ipv4-api.hdhomerun.com/discover";
-   $devices = json_decode(file_get_contents($url), true);
+   $ctx = stream_context_create(['http' => ['timeout' => 5]]);
+   $devices = json_decode(@file_get_contents($url, false, $ctx), true) ?? [];
 
    $numRecordings = 0;
    $numCapturing = 0;
@@ -95,19 +96,21 @@ function getMenuCnts()
    $numScheduled = 0;
    foreach ($devices as $device) {
       $deviceUrl = $device['DiscoverURL'];
-      $device_detail = json_decode(file_get_contents($deviceUrl), true);
-      $lineupJsonUrl = $device_detail['LineupURL'];
+      $device_detail = json_decode(@file_get_contents($deviceUrl, false, $ctx), true) ?? [];
+      $lineupJsonUrl = $device_detail['LineupURL'] ?? null;
       $recordingsUrl = $DbViewBase.'/recordings';
       $capturingUrl = $DbViewBase.'/capturing';
-	     
-      $numChannels += sizeof(json_decode(file_get_contents($lineupJsonUrl), true));
-      $numRecordings += json_decode(file_get_contents($recordingsUrl), true)['total_rows'];
-      $numCapturing += json_decode(file_get_contents($capturingUrl), true)['total_rows'];
+
+      if ($lineupJsonUrl) {
+         $numChannels += sizeof(json_decode(@file_get_contents($lineupJsonUrl, false, $ctx), true) ?? []);
+      }
+      $numRecordings += json_decode(@file_get_contents($recordingsUrl, false, $ctx), true)['total_rows'] ?? 0;
+      $numCapturing += json_decode(@file_get_contents($capturingUrl, false, $ctx), true)['total_rows'] ?? 0;
 
       $scheduledUrl = $DbViewBase.'/scheduled';
-      $result = json_decode(file_get_contents($scheduledUrl), true);
-      $scheduled = $result['rows'];
-      $numScheduled = $result['total_rows'];
+      $result = json_decode(@file_get_contents($scheduledUrl, false, $ctx), true) ?? [];
+      $scheduled = $result['rows'] ?? [];
+      $numScheduled = $result['total_rows'] ?? 0;
    }
 
    return array(
@@ -198,13 +201,16 @@ function renderEntryInfo($id)
    }
 
    $url = "http://ipv4-api.hdhomerun.com/discover";
-   $devices = json_decode(file_get_contents($url), true);
+   $ctx = stream_context_create(['http' => ['timeout' => 5]]);
+   $devices = json_decode(@file_get_contents($url, false, $ctx), true) ?? [];
+   $lineup = [];
    foreach ($devices as $device) {
       $deviceUrl = $device['DiscoverURL'];
-      $device_detail = json_decode(file_get_contents($deviceUrl), true);
-      $deviceId = $device_detail['DeviceID'];
-      $lineupJsonUrl = $device_detail['LineupURL'];
-      $lineup = json_decode(file_get_contents($lineupJsonUrl), true);
+      $device_detail = json_decode(@file_get_contents($deviceUrl, false, $ctx), true) ?? [];
+      $lineupJsonUrl = $device_detail['LineupURL'] ?? null;
+      if ($lineupJsonUrl) {
+         $lineup = json_decode(@file_get_contents($lineupJsonUrl, false, $ctx), true) ?? [];
+      }
    }
 
    $channelName = 'unknown';
@@ -338,13 +344,16 @@ function renderSchdInfo($id)
    $scheduledDuration = deltaTimeStr($recordEnd-$recordStart);
 
    $url = "http://ipv4-api.hdhomerun.com/discover";
-   $devices = json_decode(file_get_contents($url), true);
+   $ctx = stream_context_create(['http' => ['timeout' => 5]]);
+   $devices = json_decode(@file_get_contents($url, false, $ctx), true) ?? [];
+   $lineup = [];
    foreach ($devices as $device) {
       $deviceUrl = $device['DiscoverURL'];
-      $device_detail = json_decode(file_get_contents($deviceUrl), true);
-      $deviceId = $device_detail['DeviceID'];
-      $lineupJsonUrl = $device_detail['LineupURL'];
-      $lineup = json_decode(file_get_contents($lineupJsonUrl), true);
+      $device_detail = json_decode(@file_get_contents($deviceUrl, false, $ctx), true) ?? [];
+      $lineupJsonUrl = $device_detail['LineupURL'] ?? null;
+      if ($lineupJsonUrl) {
+         $lineup = json_decode(@file_get_contents($lineupJsonUrl, false, $ctx), true) ?? [];
+      }
    }
 
    $channelName = 'unknown';
@@ -434,17 +443,17 @@ function renderMainMenu($userName)
    $result .= '   <input onclick="menuAction()" type="image" src="img/showmenu.png"';
    $result .= '          width="64" height="64" title="Menu" class="Btn">';
    $result .= '   <div id="menuItems" class="w3-hide">';
-   $result .= renderMenuItems($enabled,$refs);
+   $result .= renderMenuItems($enabled,$refs,$d);
    $result .= '   </div>';
    $result .= ' </div>';
-   
+
    return $result;
 }
 
 
-function renderMenuItems($enabled,$refs)
+function renderMenuItems($enabled,$refs,$d=null)
 {
-   $d = getMenuCnts();
+   if ($d === null) $d = getMenuCnts();
 
    $imgs = array(
       'live' => 'img/livetv2.png',

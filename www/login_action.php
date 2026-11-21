@@ -1,8 +1,4 @@
-<!DOCTYPE html>
-
 <?php
-    // intentionally place this before the html tag
-
     // Uncomment to see php errors
     //ini_set('display_errors', 1);
     //ini_set('display_startup_errors', 1);
@@ -12,7 +8,7 @@
 
     $postError = 1;
     $success = 0;
-    
+
     setcookie('login_user', "unknown", time()-3600, '/');
     if (isset($_POST['uname']) && isset($_POST['pswd']))
     {
@@ -23,10 +19,12 @@
       $Db = "dvr";
       $DbViewBase = $DbBase.'/'.$Db.'/_design/dvr/_view';
 
-      $usersUrl = $DbViewBase.'/user?key="'.$_POST['uname'].'"';
-      $user_detail = json_decode(file_get_contents($usersUrl), true);
+      $usersUrl = $DbViewBase.'/user?key="'.urlencode($_POST['uname']).'"';
+      $ctx = stream_context_create(['http' => ['timeout' => 5]]);
+      $raw = @file_get_contents($usersUrl, false, $ctx);
+      $user_detail = $raw !== false ? json_decode($raw, true) : null;
       $success = 0;
-      if (count($user_detail['rows']) > 0)
+      if (isset($user_detail['rows']) && count($user_detail['rows']) > 0)
       {
          $row = $user_detail['rows'][0]['value'];
          $pswd = hash('sha256', $_POST['pswd']);
@@ -43,6 +41,7 @@
       }
     }
   ?>
+<!DOCTYPE html>
 
 
 <html>

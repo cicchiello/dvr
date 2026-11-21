@@ -56,8 +56,9 @@
     <div class="row box col-sm-4 w3-panel w3-card w3-white w3-round-large w3-display-bottomright">
       <?php
 	 $url = "http://ipv4-api.hdhomerun.com/discover";
-	 $devices = json_decode(file_get_contents($url), true);
-	 
+	 $ctx = stream_context_create(['http' => ['timeout' => 5]]);
+	 $devices = json_decode(@file_get_contents($url, false, $ctx), true) ?? [];
+
 	 $cnt = count($devices);
 	 if ($cnt == 0) {
 	    echo '    <p>No HDHomeRun detected.</p>';
