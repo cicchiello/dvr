@@ -124,7 +124,8 @@ function getMenuCnts()
 
 function renderRecordingsTable($items, $actions)
 {
-   date_default_timezone_set('America/New_York'); // Change to your desired timezone
+   // Change to your desired timezone or pull from config
+   date_default_timezone_set('America/New_York');
    
    $result = '';
    $cnt = 0;
@@ -179,6 +180,9 @@ function renderRecordingsTable($items, $actions)
 
 function renderEntryInfo($id)
 {
+   // Change to your desired timezone or pull from config
+   date_default_timezone_set('America/New_York');
+   
    $ini = parse_ini_file("./config.ini");
    $DbBase = $ini['couchbase'];
    $Db = "dvr";
@@ -328,6 +332,9 @@ function renderEntryInfo($id)
 
 function renderSchdInfo($id)
 {
+   // Change to your desired timezone or pull from config
+   date_default_timezone_set('America/New_York');
+   
    $ini = parse_ini_file("./config.ini");
    $DbBase = $ini['couchbase'];
    $Db = "dvr";

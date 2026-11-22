@@ -21,7 +21,6 @@ sleep 10
 
 d=$(date)
 ini="/home/${username}/dvr/py/config.ini"
-echo "${d}: invoking ${prog} in 10s..." >> "${dvrlog}"
 python3 -u "${prog}" -ini "${ini}" -mode prod >> "${proglog}"
 
 # if control reaches here, it means that ${prog} crashed (it's supposed to be a daemon)
