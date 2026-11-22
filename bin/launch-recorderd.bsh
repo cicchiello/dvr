@@ -11,11 +11,11 @@ proglog="/home/${username}/logs/dvr-recorderd.log"
 who=$(whoami)
 d=$(date)
 host=$(hostname)
+dvrlog="/home/${username}/logs/dvr-startup.log"
 echo "${d}: whoami returned \"${who}\"" >> "${dvrlog}"
 echo "${d}: hostname returned \"${host}\"" >> "${dvrlog}"
 
 d=$(date)
-dvrlog="/home/${username}/logs/dvr-startup.log"
 echo "${d}: invoking ${prog} in 10s..." >> "${dvrlog}"
 sleep 10
 
